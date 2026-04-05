@@ -294,6 +294,138 @@
             .player-hp-bar { width: 60px; height: 8px; }
         }
 
+        .encyclopedia-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 450px;
+            background: rgba(26, 20, 9, 0.98);
+            border: 3px solid #8b4513;
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(139, 69, 19, 0.6);
+            z-index: 100;
+        }
+
+        .encyclopedia-panel.active {
+            display: flex;
+        }
+
+        .encyclopedia-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffd700;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #8b4513;
+        }
+
+        .encyclopedia-close {
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .encyclopedia-close:hover {
+            color: #ff6666;
+        }
+
+        .encyclopedia-content {
+            flex: 1;
+            min-height: 280px;
+            overflow-y: auto;
+            color: #ccc;
+        }
+
+        .encyclopedia-soldier-full {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(139, 69, 19, 0.3);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .encyclopedia-icon-large {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            margin-right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .encyclopedia-info-full {
+            flex: 1;
+        }
+
+        .encyclopedia-name-large {
+            color: #ffd700;
+            font-size: 22px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .encyclopedia-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            font-size: 14px;
+            color: #90ee90;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .encyclopedia-desc-large {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .encyclopedia-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #8b4513;
+        }
+
+        .encyclopedia-btn {
+            background: #8b4513;
+            border: none;
+            color: #ffd700;
+            font-size: 18px;
+            padding: 8px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .encyclopedia-btn:hover {
+            background: #a0522d;
+        }
+
+        .encyclopedia-page {
+            color: #ffd700;
+            font-size: 16px;
+        }
+
         @media (max-width: 400px) {
             .game-title { font-size: 14px; }
             .energy-display, .timer-display, .info-display { font-size: 8px; }
@@ -356,6 +488,19 @@
                 <div class="final-score">坚持时间: <span id="victoryTime">0</span>秒</div>
                 <div class="final-score">击杀敌人: <span id="victoryScore">0</span></div>
                 <div class="restart-hint">点击任意位置重新开始</div>
+            </div>
+
+            <div class="encyclopedia-panel" id="encyclopediaPanel">
+                <div class="encyclopedia-header">
+                    <span>我方兵种图鉴</span>
+                    <button class="encyclopedia-close" id="encyclopediaClose">×</button>
+                </div>
+                <div class="encyclopedia-content" id="encyclopediaContent"></div>
+                <div class="encyclopedia-nav">
+                    <button class="encyclopedia-btn" id="prevPage">◀</button>
+                    <span class="encyclopedia-page" id="pageIndicator">1/3</span>
+                    <button class="encyclopedia-btn" id="nextPage">▶</button>
+                </div>
             </div>
         </div>
     </div>
@@ -831,6 +976,75 @@
                     ctx.arc(soldier.x, soldier.y, soldier.range, 0, Math.PI * 2);
                     ctx.stroke();
                     ctx.setLineDash([]);
+                } else if (soldier.type === 'horn') {
+                    // 号角兵 - 金色/铜色
+                    ctx.fillStyle = '#daa520';
+                    ctx.shadowColor = '#ffd700';
+                    ctx.shadowBlur = 10;
+                    // Body
+                    ctx.fillRect(-10, -12, 20, 24);
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y - 16, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Horn (trumpet)
+                    ctx.fillStyle = '#cd853f';
+                    ctx.beginPath();
+                    ctx.moveTo(soldier.x + 5, soldier.y - 5);
+                    ctx.lineTo(soldier.x + 25, soldier.y - 10);
+                    ctx.lineTo(soldier.x + 25, soldier.y);
+                    ctx.lineTo(soldier.x + 5, soldier.y + 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Range indicator
+                    ctx.strokeStyle = 'rgba(218, 165, 32, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y, soldier.range, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    // Boost aura when active
+                    if (soldier.boosting) {
+                        ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(soldier.x, soldier.y, soldier.range, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                } else if (soldier.type === 'healer') {
+                    // 回复兵 - 白色/粉红色
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = '#ff69b4';
+                    ctx.shadowBlur = 10;
+                    // Body (robe)
+                    ctx.fillRect(-10, -8, 20, 20);
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y - 14, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Cross/plus symbol
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.fillRect(soldier.x - 2, soldier.y - 5, 4, 15);
+                    ctx.fillRect(soldier.x - 6, soldier.y, 12, 4);
+                    // Range indicator
+                    ctx.strokeStyle = 'rgba(255, 182, 193, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y, soldier.range, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    // Heal aura when active
+                    if (soldier.healing) {
+                        ctx.strokeStyle = 'rgba(255, 105, 180, 0.8)';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(soldier.x, soldier.y, soldier.range, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
                 }
 
                 // Health bar
@@ -853,7 +1067,7 @@
                 }
 
                 // Charge timer for artillery, laser and fairy (above soldier's head)
-                if ((soldier.type === 'artillery' || soldier.type === 'laser' || soldier.type === 'fairy') && soldier.chargeTime !== undefined) {
+                if ((soldier.type === 'artillery' || soldier.type === 'laser' || soldier.type === 'fairy' || soldier.type === 'horn' || soldier.type === 'healer') && soldier.chargeTime !== undefined) {
                     const totalTime = soldier.attackSpeed / 60; // seconds
                     const elapsed = soldier.chargeTime / 60; // seconds
                     const remaining = Math.max(0, totalTime - elapsed);
@@ -1369,7 +1583,7 @@
         function spawnSoldier(x, y, type) {
             // If type not specified, random select (for backwards compatibility)
             if (!type) {
-                const types = ['sword', 'bow', 'spear', 'assassin', 'trebuchet', 'collector', 'slow', 'artillery', 'machinegun', 'laser', 'angel', 'fairy'];
+                const types = ['sword', 'bow', 'spear', 'assassin', 'trebuchet', 'collector', 'slow', 'artillery', 'machinegun', 'laser', 'angel', 'fairy', 'horn', 'healer'];
                 type = types[Math.floor(Math.random() * types.length)];
             }
 
@@ -1382,7 +1596,7 @@
             } else if (type === 'assassin') {
                 hp = 20; damage = 15; range = 120; attackSpeed = 15;
             } else if (type === 'trebuchet') {
-                hp = 80; damage = 25; range = 300; attackSpeed = 90;
+                hp = 80; damage = 25; range = 300; attackSpeed = 150;
             } else if (type === 'collector') {
                 hp = 35; damage = 5; range = 60; attackSpeed = 20;
                 // 收集兵自动收集能量
@@ -1412,6 +1626,12 @@
             } else if (type === 'fairy') {
                 // 小仙女 - 10秒让敌方小兵变成大肥猪
                 hp = 60; damage = 0; range = 200; attackSpeed = 600; // 600 frames = 10 seconds
+            } else if (type === 'horn') {
+                // 号角兵 - 吹号角增强周围友军
+                hp = 45; damage = 0; range = 120; attackSpeed = 240; // 每4秒吹号角
+            } else if (type === 'healer') {
+                // 回复兵 - 回复周围友军血量
+                hp = 40; damage = 0; range = 100; attackSpeed = 180; // 每3秒回复血量
             }
 
             soldiers.push({
@@ -1425,7 +1645,7 @@
                 attackSpeed: attackSpeed,
                 lastAttack: frameCount,
                 lifetime: 1800, // 30 seconds at 60fps
-                chargeTime: (type === 'artillery' || type === 'laser' || type === 'fairy') ? 0 : undefined,
+                chargeTime: (type === 'artillery' || type === 'laser' || type === 'fairy' || type === 'horn' || type === 'healer') ? 0 : undefined,
                 direction: 1, // For machine gunner firing direction
                 shield: (type === 'angel') ? 30 : 0, // Angel's shield amount
                 lastShield: 0 // Last frame when shield was applied
@@ -1439,6 +1659,16 @@
         function updateSoldiers() {
             soldiers.forEach(soldier => {
                 soldier.lifetime--;
+
+                // Boost timer decay (号角兵buff)
+                if (soldier.boostTimer && soldier.boostTimer > 0) {
+                    soldier.boostTimer--;
+                    if (soldier.boostTimer === 0) {
+                        // buff结束，恢复原伤害和攻速
+                        if (soldier.originalDamage) soldier.damage = soldier.originalDamage;
+                        if (soldier.originalAttackSpeed) soldier.attackSpeed = soldier.originalAttackSpeed;
+                    }
+                }
 
                 // Collector auto-collect energy within 50px
                 if (soldier.type === 'collector') {
@@ -1466,6 +1696,7 @@
                 let minDist = soldier.range;
 
                 enemies.forEach(enemy => {
+                    if (enemy.isPig) return; // 猪不会被攻击
                     const dx = enemy.x - soldier.x;
                     const dy = enemy.y - soldier.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1623,6 +1854,57 @@
                         soldier.healing = true;
                         spawnExplosion(soldier.x, soldier.y, '255, 182, 193', 15);
                     }
+                } else if (soldier.type === 'horn') {
+                    // 号角兵 - 吹号角增强周围友军
+                    if (!soldier.chargeTime) soldier.chargeTime = 0;
+                    soldier.chargeTime++;
+                    soldier.boosting = false;
+
+                    if (soldier.chargeTime >= soldier.attackSpeed) {
+                        soldier.chargeTime = 0;
+                        soldier.boosting = true;
+                        // 给范围内所有友军加攻击力和攻速buff
+                        soldiers.forEach(ally => {
+                            if (ally === soldier) return;
+                            const dx = ally.x - soldier.x;
+                            const dy = ally.y - soldier.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < soldier.range) {
+                                // 保存原始属性
+                                if (!ally.originalDamage) ally.originalDamage = ally.damage;
+                                if (!ally.originalAttackSpeed) ally.originalAttackSpeed = ally.attackSpeed;
+                                // 增加50%伤害
+                                ally.damage = Math.floor(ally.damage * 1.5);
+                                // 增加50%攻速 (减少50%攻击间隔)
+                                ally.attackSpeed = Math.floor(ally.attackSpeed * 0.5);
+                                ally.boostTimer = 180; // buff持续3秒
+                                spawnExplosion(ally.x, ally.y, '255, 215, 0', 5);
+                            }
+                        });
+                        spawnExplosion(soldier.x, soldier.y, '255, 215, 0', 10);
+                    }
+                } else if (soldier.type === 'healer') {
+                    // 回复兵 - 回复周围友军血量
+                    if (!soldier.chargeTime) soldier.chargeTime = 0;
+                    soldier.chargeTime++;
+                    soldier.healing = false;
+
+                    if (soldier.chargeTime >= soldier.attackSpeed) {
+                        soldier.chargeTime = 0;
+                        soldier.healing = true;
+                        // 给范围内所有友军回血
+                        soldiers.forEach(ally => {
+                            if (ally === soldier) return;
+                            const dx = ally.x - soldier.x;
+                            const dy = ally.y - soldier.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < soldier.range) {
+                                ally.hp = Math.min(ally.maxHp, ally.hp + 20); // 回复20点血
+                                spawnExplosion(ally.x, ally.y, '255, 182, 193', 5);
+                            }
+                        });
+                        spawnExplosion(soldier.x, soldier.y, '255, 105, 180', 10);
+                    }
                 } else if (target && frameCount - soldier.lastAttack > soldier.attackSpeed) {
                     soldier.lastAttack = frameCount;
 
@@ -1678,6 +1960,7 @@
                     // Machinegun - instant hit on enemies in path
                     if (bullet.type === 'machinegun') {
                         enemies.forEach(enemy => {
+                            if (enemy.isPig) return; // 猪不会被攻击
                             const dx = enemy.x - bullet.x;
                             const dy = enemy.y - bullet.y;
                             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1705,6 +1988,7 @@
                         let impact = false;
                         // Check if near any enemy
                         enemies.forEach(enemy => {
+                            if (enemy.isPig) return; // 猪不会被攻击
                             const dx = enemy.x - bullet.x;
                             const dy = enemy.y - bullet.y;
                             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1733,6 +2017,7 @@
                     // Laser - piercing, hits all enemies in path
                     if (bullet.type === 'laser' && bullet.piercing) {
                         enemies.forEach(enemy => {
+                            if (enemy.isPig) return; // 猪不会被攻击
                             // Skip already pierced enemies
                             if (bullet.piercedEnemies && bullet.piercedEnemies.includes(enemy)) return;
 
@@ -2131,6 +2416,10 @@
 
         // Input handling - add to game container
         document.querySelector('.game-container').addEventListener('click', (e) => {
+            // 如果图鉴打开中，不触发游戏开始
+            if (encyclopediaPanel.classList.contains('active')) {
+                return;
+            }
             if (gameState === 'start') {
                 initAudio();
                 gameState = 'playing';
@@ -2206,6 +2495,180 @@
                 gameState = 'playing';
             }
         }, { passive: false });
+
+        // Encyclopedia system
+        const encyclopediaPanel = document.getElementById('encyclopediaPanel');
+        const encyclopediaContent = document.getElementById('encyclopediaContent');
+        const encyclopediaClose = document.getElementById('encyclopediaClose');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageIndicator = document.getElementById('pageIndicator');
+
+        // 获取兵种速度映射
+        const soldierSpeedMap = {
+            'sword': 2.5, 'bow': 2.5, 'spear': 2.0, 'assassin': 3.0,
+            'trebuchet': 1.5, 'collector': 3.5, 'slow': 1.8,
+            'artillery': 2.0, 'machinegun': 2.0, 'laser': 2.0,
+            'angel': 2.0, 'fairy': 2.0, 'horn': 2.0, 'healer': 2.0
+        };
+
+        // 获取兵种属性（动态从游戏代码获取）
+        function getSoldierStats(type) {
+            let hp = 30, damage = 10, range = 30, attackSpeed = 30;
+
+            if (type === 'bow') {
+                hp = 20; damage = 8; range = 200; attackSpeed = 45;
+            } else if (type === 'spear') {
+                hp = 40; damage = 12; range = 45; attackSpeed = 25;
+            } else if (type === 'assassin') {
+                hp = 20; damage = 15; range = 120; attackSpeed = 15;
+            } else if (type === 'trebuchet') {
+                hp = 80; damage = 25; range = 300; attackSpeed = 150;
+            } else if (type === 'collector') {
+                hp = 35; damage = 5; range = 60; attackSpeed = 20;
+            } else if (type === 'slow') {
+                hp = 50; damage = 3; range = 80; attackSpeed = 60;
+            } else if (type === 'artillery') {
+                hp = 120; damage = 100; range = 500; attackSpeed = 480;
+            } else if (type === 'machinegun') {
+                hp = 30; damage = 3; range = 150; attackSpeed = 5;
+            } else if (type === 'laser') {
+                hp = 80; damage = 150; range = 600; attackSpeed = 1200;
+            } else if (type === 'angel') {
+                hp = 50; damage = 0; range = 100; attackSpeed = 180;
+            } else if (type === 'fairy') {
+                hp = 60; damage = 0; range = 200; attackSpeed = 600;
+            } else if (type === 'horn') {
+                hp = 45; damage = 0; range = 120; attackSpeed = 240;
+            } else if (type === 'healer') {
+                hp = 40; damage = 0; range = 100; attackSpeed = 180;
+            }
+
+            return { hp, damage, range, attackSpeed };
+        }
+
+        // 兵种描述映射
+        const soldierDescMap = {
+            'sword': '基础近战兵种，攻击力中等，血量中等',
+            'bow': '远程攻击兵种，射程远，攻击力较低',
+            'spear': '防御型兵种，血量高，攻击距离中等',
+            'assassin': '高爆发兵种，伤害高但血量低',
+            'trebuchet': '超远程兵种，伤害极高，攻击间隔长',
+            'collector': '自动收集周围能量，血量中等',
+            'slow': '范围攻击，减速敌人50%',
+            'artillery': '8秒蓄力发射高伤害炮弹，范围伤害',
+            'machinegun': '持续发射三行子弹，攻速极快',
+            'laser': '20秒蓄力发射全图穿透炮弹',
+            'angel': '给周围友军加护盾，每3秒生效，护盾上限50点',
+            'fairy': '召唤大肥猪追击敌人，10秒CD，猪爆炸造成300范围伤害',
+            'horn': '吹号角增强友军50%伤害和50%攻速，持续3秒',
+            'healer': '每3秒回复周围友军20点血量'
+        };
+
+        // 兵种图标映射
+        const soldierIconMap = {
+            'sword': '⚔️', 'bow': '🏹', 'spear': '🔱', 'assassin': '🗡️',
+            'trebuchet': '⚙️', 'collector': '🎒', 'slow': '❄️',
+            'artillery': '💣', 'machinegun': '🔫', 'laser': '⚡',
+            'angel': '👼', 'fairy': '🧚', 'horn': '📯', 'healer': '💊'
+        };
+
+        // 兵种名称映射
+        const soldierNameMap = {
+            'sword': '刀兵', 'bow': '弓兵', 'spear': '枪兵', 'assassin': '刺客',
+            'trebuchet': '投石车', 'collector': '收集兵', 'slow': '减速兵',
+            'artillery': '炮兵', 'machinegun': '机枪兵', 'laser': '激光兵',
+            'angel': '天使', 'fairy': '小仙女', 'horn': '号角兵', 'healer': '回复兵'
+        };
+
+        // 动态生成兵种数据
+        const soldierTypes = ['sword', 'bow', 'spear', 'assassin', 'trebuchet', 'collector', 'slow', 'artillery', 'machinegun', 'laser', 'angel', 'fairy', 'horn', 'healer'];
+
+        function generateSoldiersData() {
+            return soldierTypes.map(type => {
+                const stats = getSoldierStats(type);
+                return {
+                    icon: soldierIconMap[type],
+                    name: soldierNameMap[type],
+                    hp: stats.hp,
+                    damage: stats.damage,
+                    range: stats.range,
+                    speed: soldierSpeedMap[type],
+                    attackSpeed: stats.attackSpeed,
+                    desc: soldierDescMap[type]
+                };
+            });
+        }
+
+        let soldiersData = generateSoldiersData();
+        let currentPage = 0;
+        const totalPages = soldiersData.length;
+
+        function renderEncyclopedia() {
+            // 每次渲染时重新生成数据，确保反映最新属性
+            soldiersData = generateSoldiersData();
+            const soldier = soldiersData[currentPage];
+            encyclopediaContent.innerHTML = `
+                <div class="encyclopedia-soldier-full">
+                    <div class="encyclopedia-icon-large">${soldier.icon}</div>
+                    <div class="encyclopedia-info-full">
+                        <div class="encyclopedia-name-large">${soldier.name}</div>
+                        <div class="encyclopedia-stats">
+                            <div>生命: ${soldier.hp}</div>
+                            <div>伤害: ${soldier.damage}</div>
+                            <div>射程: ${soldier.range}</div>
+                            <div>速度: ${soldier.speed}</div>
+                        </div>
+                        <div class="encyclopedia-desc-large">${soldier.desc}</div>
+                    </div>
+                </div>
+            `;
+            pageIndicator.textContent = `${currentPage + 1}/${totalPages}`;
+        }
+
+        function showEncyclopedia() {
+            encyclopediaPanel.classList.add('active');
+            renderEncyclopedia();
+        }
+
+        function hideEncyclopedia() {
+            encyclopediaPanel.classList.remove('active');
+        }
+
+        function nextPage() {
+            currentPage = (currentPage + 1) % totalPages;
+            renderEncyclopedia();
+        }
+
+        function prevPage() {
+            currentPage = (currentPage - 1 + totalPages) % totalPages;
+            renderEncyclopedia();
+        }
+
+        // Keyboard 'a' to open encyclopedia
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'a' || e.key === 'A') {
+                if ((gameState === 'playing' || gameState === 'start') && !encyclopediaPanel.classList.contains('active')) {
+                    showEncyclopedia();
+                }
+            } else if (e.key === 'Escape') {
+                hideEncyclopedia();
+            }
+        });
+
+        // Close button
+        encyclopediaClose.addEventListener('click', hideEncyclopedia);
+
+        // Navigation buttons
+        prevPageBtn.addEventListener('click', prevPage);
+        nextPageBtn.addEventListener('click', nextPage);
+
+        // Click outside to close
+        encyclopediaPanel.addEventListener('click', (e) => {
+            if (e.target === encyclopediaPanel) {
+                hideEncyclopedia();
+            }
+        });
 
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
