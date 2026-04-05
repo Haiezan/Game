@@ -94,6 +94,18 @@
                         inset 0 0 40px rgba(139, 69, 19, 0.1);
         }
 
+        .game-card.fire {
+            border: 2px solid #ff4444;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.2),
+                        inset 0 0 30px rgba(255, 68, 68, 0.05);
+        }
+
+        .game-card.fire:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 0 40px rgba(255, 68, 68, 0.4),
+                        inset 0 0 40px rgba(255, 68, 68, 0.1);
+        }
+
         .game-icon {
             font-size: 48px;
             margin-bottom: 15px;
@@ -117,6 +129,11 @@
             text-shadow: 0 0 10px #daa520;
         }
 
+        .game-card.fire .game-name {
+            color: #ff6666;
+            text-shadow: 0 0 10px #ff4444;
+        }
+
         .game-desc {
             font-size: 10px;
             text-align: center;
@@ -129,6 +146,10 @@
 
         .game-card.ancient .game-desc {
             color: #b8860b;
+        }
+
+        .game-card.fire .game-desc {
+            color: #cc8888;
         }
 
         .play-btn {
@@ -167,6 +188,18 @@
             transform: scale(1.05);
         }
 
+        .game-card.fire .play-btn {
+            background: linear-gradient(180deg, #cc3333 0%, #881111 100%);
+            color: #ffcccc;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+        }
+
+        .game-card.fire .play-btn:hover {
+            background: linear-gradient(180deg, #dd4444 0%, #992222 100%);
+            box-shadow: 0 6px 20px rgba(255, 68, 68, 0.5);
+            transform: scale(1.05);
+        }
+
         .footer {
             text-align: center;
             margin-top: 50px;
@@ -198,6 +231,12 @@
                 <span class="game-icon">⚔️</span>
                 <h2 class="game-name">将士大战</h2>
                 <p class="game-desc">塔防策略游戏<br>收集能量 · 放置士兵 · 击败Boss</p>
+                <button class="play-btn">开始游戏</button>
+            </div>
+            <div class="game-card fire" onclick="location.href='火柴人大战.html'">
+                <span class="game-icon">🔥</span>
+                <h2 class="game-name">火柴人大战</h2>
+                <p class="game-desc">动作对战游戏<br>击败对手 · 收集武器 · 取得胜利</p>
                 <button class="play-btn">开始游戏</button>
             </div>
         </div>
