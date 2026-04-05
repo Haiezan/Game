@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>将士大战</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        body {
+            background: #1a1409;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            border: 3px solid #8b4513;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(139, 69, 19, 0.4),
+                        inset 0 0 30px rgba(139, 69, 19, 0.1);
+        }
+
+        canvas {
+            display: block;
+            background: #2d4a1c;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .info-display {
+            color: #90ee90;
+            font-size: 12px;
+            text-shadow: 0 0 10px #228b22;
+        }
+
+        .energy-display {
+            color: #00ff00;
+            font-size: 12px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .timer-display {
+            color: #ffa500;
+            font-size: 12px;
+            text-shadow: 0 0 10px #ff8c00;
+        }
+
+        .player-hp-container {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .player-hp-bar {
+            width: 100px;
+            height: 10px;
+            background: #331100;
+            border: 1px solid #ff6600;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .player-hp-fill {
+            height: 100%;
+            background: #ff6600;
+            box-shadow: 0 0 5px #ff6600;
+            transition: width 0.2s;
+        }
+
+        .hp-label {
+            color: #ff6600;
+            font-size: 8px;
+        }
+
+        .boss-hp-container {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 350px;
+            display: none;
+        }
+
+        .boss-hp-container.active {
+            display: block;
+        }
+
+        .boss-name {
+            color: #ff0000;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px #ff0000;
+        }
+
+        .boss-hp-bar {
+            width: 100%;
+            height: 14px;
+            background: #330000;
+            border: 2px solid #ff0000;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .boss-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff4444);
+            box-shadow: 0 0 10px #ff0000;
+            transition: width 0.2s;
+        }
+
+        .soldier-info {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+
+        .soldier-count {
+            color: #ffd700;
+            font-size: 10px;
+            text-shadow: 0 0 8px #daa520;
+        }
+
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 20, 9, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .start-screen.hidden {
+            display: none;
+        }
+
+        .game-title {
+            color: #8b4513;
+            font-size: 24px;
+            text-shadow: 0 0 30px #8b4513, 2px 2px 0 #5c3317;
+            text-align: center;
+        }
+
+        .game-subtitle {
+            color: #90ee90;
+            font-size: 12px;
+            text-shadow: 0 0 10px #228b22;
+        }
+
+        .controls-hint {
+            color: #8b7355;
+            font-size: 10px;
+            text-align: center;
+            line-height: 2;
+        }
+
+        .start-hint {
+            color: #ffd700;
+            font-size: 12px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 20, 9, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .game-over-screen.active {
+            display: flex;
+        }
+
+        .game-over-title {
+            color: #ff4444;
+            font-size: 28px;
+            text-shadow: 0 0 20px #ff0000;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        .final-score {
+            color: #ffd700;
+            font-size: 14px;
+        }
+
+        .restart-hint {
+            color: #8b7355;
+            font-size: 10px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        .victory-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 20, 9, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .victory-screen.active {
+            display: flex;
+        }
+
+        .victory-title {
+            color: #ffd700;
+            font-size: 28px;
+            text-shadow: 0 0 30px #ffd700;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        /* 响应式UI */
+        @media (max-width: 600px) {
+            .game-title { font-size: 16px; }
+            .game-subtitle { font-size: 10px; }
+            .controls-hint { font-size: 8px; }
+            .start-hint { font-size: 10px; }
+            .energy-display, .timer-display, .info-display { font-size: 10px; }
+            .hp-label { font-size: 6px; }
+            .soldier-count { font-size: 8px; }
+            .boss-name { font-size: 10px; }
+            .game-over-title { font-size: 18px; }
+            .victory-title { font-size: 18px; }
+            .final-score { font-size: 10px; }
+            .restart-hint { font-size: 8px; }
+            .player-hp-bar { width: 60px; height: 8px; }
+        }
+
+        @media (max-width: 400px) {
+            .game-title { font-size: 14px; }
+            .energy-display, .timer-display, .info-display { font-size: 8px; }
+            .boss-name { font-size: 8px; }
+            .boss-hp-bar { height: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+            <div class="ui-overlay">
+                <div class="energy-display">能量: <span id="energyCount">0</span>/5</div>
+                <div class="timer-display">时间: <span id="gameTime">0</span>s</div>
+                <div class="info-display">分数: <span id="score">0</span></div>
+            </div>
+
+            <div class="player-hp-container">
+                <span class="hp-label">HP</span>
+                <div class="player-hp-bar">
+                    <div class="player-hp-fill" id="playerHpFill" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="soldier-info">
+                <div class="soldier-count">士兵: <span id="soldierCount">0</span></div>
+                <div class="soldier-count" id="soldierTypeHint" style="display:none; color: #00ff00; font-size: 8px;"></div>
+            </div>
+
+            <div class="boss-hp-container" id="bossHpContainer">
+                <div class="boss-name">BOSS - 敌军将领</div>
+                <div class="boss-hp-bar">
+                    <div class="boss-hp-fill" id="bossHpFill" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="start-screen" id="startScreen">
+                <div class="game-title">将士大战</div>
+                <div class="game-subtitle">保卫疆土</div>
+                <div class="controls-hint">
+                    收集5个能量方块<br>
+                    点击战场放置士兵<br>
+                    士兵自动战斗<br>
+                    100秒后BOSS出现
+                </div>
+                <div class="start-hint">点击任意位置开始</div>
+            </div>
+
+            <div class="game-over-screen" id="gameOverScreen">
+                <div class="game-over-title">战斗失败</div>
+                <div class="final-score">坚持时间: <span id="finalTime">0</span>秒</div>
+                <div class="final-score">击杀敌人: <span id="finalScore">0</span></div>
+                <div class="restart-hint">点击任意位置重新开始</div>
+            </div>
+
+            <div class="victory-screen" id="victoryScreen">
+                <div class="victory-title">胜利!</div>
+                <div class="final-score">坚持时间: <span id="victoryTime">0</span>秒</div>
+                <div class="final-score">击杀敌人: <span id="victoryScore">0</span></div>
+                <div class="restart-hint">点击任意位置重新开始</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const energyCountEl = document.getElementById('energyCount');
+        const gameTimeEl = document.getElementById('gameTime');
+        const scoreEl = document.getElementById('score');
+        const playerHpFill = document.getElementById('playerHpFill');
+        const soldierCountEl = document.getElementById('soldierCount');
+        const soldierTypeHint = document.getElementById('soldierTypeHint');
+        const bossHpContainer = document.getElementById('bossHpContainer');
+        const bossHpFill = document.getElementById('bossHpFill');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const victoryScreen = document.getElementById('victoryScreen');
+        const finalTimeEl = document.getElementById('finalTime');
+        const finalScoreEl = document.getElementById('finalScore');
+        const victoryTimeEl = document.getElementById('victoryTime');
+        const victoryScoreEl = document.getElementById('victoryScore');
+
+        // Game state
+        let gameState = 'start'; // start, playing, gameover, victory
+        let score = 0;
+        let energy = 0;
+        let gameTime = 0;
+        let frameCount = 0;
+        let playerHp = 100;
+        let maxPlayerHp = 100;
+        let bossSpawned = false;
+        let bossDefeated = false;
+
+        // Game objects
+        let energyBlocks = [];
+        let soldiers = [];
+        let enemies = [];
+        let bullets = [];
+        let enemyBullets = [];
+        let particles = [];
+        let boss = null;
+
+        // Audio
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'collect') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(660, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'spawn') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(330, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'hit') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } else if (type === 'enemy') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'boss') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(80, audioCtx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(160, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        // Background - Wilderness
+        function drawBackground() {
+            // Base ground color
+            ctx.fillStyle = '#2d4a1c';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grass patches
+            for (let i = 0; i < 80; i++) {
+                const x = (i * 37 + frameCount * 0.1) % canvas.width;
+                const y = (i * 23) % canvas.height;
+                const shade = 0.2 + Math.sin(i * 0.5) * 0.15;
+                ctx.fillStyle = `rgba(34, ${Math.floor(90 + i % 30)}, 28, ${shade})`;
+                ctx.fillRect(x, y, 3 + (i % 4), 8 + (i % 6));
+            }
+
+            // Ground texture
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 47) % canvas.width;
+                const y = (i * 31 + 100) % canvas.height;
+                ctx.fillStyle = `rgba(60, 40, 20, ${0.1 + (i % 3) * 0.05})`;
+                ctx.beginPath();
+                ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Distant trees/hills silhouette
+            ctx.fillStyle = '#1a2e10';
+            for (let i = 0; i < 8; i++) {
+                const x = i * 120 - 50;
+                const hillHeight = 30 + Math.sin(i * 2) * 20;
+                ctx.beginPath();
+                ctx.moveTo(x, canvas.height - 50);
+                ctx.quadraticCurveTo(x + 60, canvas.height - 50 - hillHeight, x + 120, canvas.height - 50);
+                ctx.fill();
+            }
+        }
+
+        // Draw energy blocks (绿色能量方块)
+        function drawEnergyBlocks() {
+            energyBlocks.forEach(block => {
+                const glow = Math.sin(frameCount * 0.15 + block.x) * 0.3 + 0.7;
+
+                // Outer glow
+                ctx.fillStyle = `rgba(0, 255, 0, ${glow * 0.3})`;
+                ctx.fillRect(block.x - 18, block.y - 18, 36, 36);
+
+                // Main block
+                ctx.fillStyle = `rgba(0, 255, 0, ${glow})`;
+                ctx.shadowColor = '#00ff00';
+                ctx.shadowBlur = 15;
+                ctx.fillRect(block.x - 10, block.y - 10, 20, 20);
+
+                // Inner highlight
+                ctx.fillStyle = `rgba(150, 255, 150, ${glow})`;
+                ctx.fillRect(block.x - 6, block.y - 6, 12, 12);
+
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Draw soldiers
+        function drawSoldiers() {
+            soldiers.forEach(soldier => {
+                ctx.save();
+                ctx.translate(soldier.x, soldier.y);
+
+                if (soldier.type === 'sword') {
+                    // 刀兵 - 红色
+                    ctx.fillStyle = '#ff4444';
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 10;
+                    // Body
+                    ctx.fillRect(-8, -10, 16, 20);
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.fillRect(-5, -18, 10, 10);
+                    // Sword
+                    ctx.fillStyle = '#c0c0c0';
+                    ctx.fillRect(6, -5, 4, 18);
+                    ctx.fillRect(4, -8, 8, 4);
+                } else if (soldier.type === 'bow') {
+                    // 弓兵 - 紫色
+                    ctx.fillStyle = '#9932cc';
+                    ctx.shadowColor = '#8b008b';
+                    ctx.shadowBlur = 10;
+                    // Body
+                    ctx.fillRect(-8, -10, 16, 20);
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.fillRect(-5, -18, 10, 10);
+                    // Bow
+                    ctx.strokeStyle = '#8b4513';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(8, -2, 10, -Math.PI/2, Math.PI/2);
+                    ctx.stroke();
+                } else if (soldier.type === 'spear') {
+                    // 枪兵 - 蓝色
+                    ctx.fillStyle = '#4169e1';
+                    ctx.shadowColor = '#0000ff';
+                    ctx.shadowBlur = 10;
+                    // Body
+                    ctx.fillRect(-8, -10, 16, 20);
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.fillRect(-5, -18, 10, 10);
+                    // Spear
+                    ctx.fillStyle = '#c0c0c0';
+                    ctx.fillRect(-2, -25, 4, 30);
+                    ctx.beginPath();
+                    ctx.moveTo(-4, -25);
+                    ctx.lineTo(0, -30);
+                    ctx.lineTo(4, -25);
+                    ctx.fill();
+                } else if (soldier.type === 'assassin') {
+                    // 刺客 - 黑色
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.shadowColor = '#000000';
+                    ctx.shadowBlur = 10;
+                    // Body (slender)
+                    ctx.fillRect(-6, -12, 12, 24);
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.fillRect(-4, -20, 8, 8);
+                    // Mask
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(-4, -18, 8, 4);
+                    // Dual daggers
+                    ctx.fillStyle = '#c0c0c0';
+                    ctx.fillRect(6, -8, 3, 12);
+                    ctx.fillRect(-9, -8, 3, 12);
+                } else if (soldier.type === 'trebuchet') {
+                    // 投石车 - 棕色
+                    ctx.fillStyle = '#8b4513';
+                    ctx.shadowColor = '#5c3317';
+                    ctx.shadowBlur = 10;
+                    // Base
+                    ctx.fillRect(-15, 0, 30, 10);
+                    // Arm
+                    ctx.fillStyle = '#a0522d';
+                    ctx.fillRect(-2, -20, 4, 25);
+                    // Counterweight
+                    ctx.fillStyle = '#4a4a4a';
+                    ctx.beginPath();
+                    ctx.arc(0, 8, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Sling
+                    ctx.strokeStyle = '#8b4513';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-2, -15);
+                    ctx.lineTo(12, -25);
+                    ctx.stroke();
+                } else if (soldier.type === 'collector') {
+                    // 收集兵 - 绿色
+                    ctx.fillStyle = '#228b22';
+                    ctx.shadowColor = '#00ff00';
+                    ctx.shadowBlur = 10;
+                    // Body
+                    ctx.fillRect(-10, -10, 20, 20);
+                    // Head with hat
+                    ctx.fillStyle = '#8b4513';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y - 15, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Bag
+                    ctx.fillStyle = '#daa520';
+                    ctx.fillRect(-4, -5, 8, 12);
+                    // Collection radius indicator (50px)
+                    ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y, 50, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (soldier.type === 'slow') {
+                    // 减速兵 - 冰蓝色
+                    ctx.fillStyle = '#00bfff';
+                    ctx.shadowColor = '#00ffff';
+                    ctx.shadowBlur = 10;
+                    // Body
+                    ctx.fillRect(-10, -10, 20, 20);
+                    // Head
+                    ctx.fillStyle = '#87ceeb';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y - 12, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Ice crystal on top
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.moveTo(soldier.x, soldier.y - 28);
+                    ctx.lineTo(soldier.x - 5, soldier.y - 18);
+                    ctx.lineTo(soldier.x + 5, soldier.y - 18);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Cold aura
+                    ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y, 20, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (soldier.type === 'artillery') {
+                    // 炮兵 - 深红色
+                    ctx.fillStyle = '#8b0000';
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 10;
+                    // Body (large)
+                    ctx.fillRect(-12, -12, 24, 24);
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.fillRect(-6, -20, 12, 10);
+                    // Cannon on shoulder
+                    ctx.fillStyle = '#4a4a4a';
+                    ctx.fillRect(8, -8, 20, 6);
+                    // Wheels
+                    ctx.fillStyle = '#2a2a2a';
+                    ctx.beginPath();
+                    ctx.arc(-6, 12, 6, 0, Math.PI * 2);
+                    ctx.arc(6, 12, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Charge indicator
+                    if (soldier.chargeTime) {
+                        const chargePercent = soldier.chargeTime / 600;
+                        ctx.fillStyle = `rgba(255, 100, 0, ${chargePercent})`;
+                        ctx.beginPath();
+                        ctx.arc(soldier.x, soldier.y, 25 * chargePercent, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (soldier.type === 'machinegun') {
+                    // 机枪兵 - 军绿色
+                    ctx.fillStyle = '#556b2f';
+                    ctx.shadowColor = '#6b8e23';
+                    ctx.shadowBlur = 10;
+                    // Body (bulky)
+                    ctx.fillRect(-10, -12, 20, 24);
+                    // Head with helmet
+                    ctx.fillStyle = '#3a3a3a';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y - 16, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Gun
+                    ctx.fillStyle = '#2a2a2a';
+                    ctx.fillRect(8, -4, 18, 4);
+                    // Muzzle flash when firing
+                    if (soldier.firing) {
+                        ctx.fillStyle = '#ffff00';
+                        ctx.shadowColor = '#ffff00';
+                        ctx.shadowBlur = 15;
+                        ctx.beginPath();
+                        ctx.arc(26, -2, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (soldier.type === 'laser') {
+                    // 激光兵 - 粉色/紫色
+                    ctx.fillStyle = '#ff1493';
+                    ctx.shadowColor = '#ff69b4';
+                    ctx.shadowBlur = 10;
+                    // Body
+                    ctx.fillRect(-10, -10, 20, 20);
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.fillRect(-5, -18, 10, 8);
+                    // Energy core
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Charge effect
+                    if (soldier.chargeTime && soldier.chargeTime > 0) {
+                        const chargePercent = soldier.chargeTime / 1500;
+                        ctx.strokeStyle = `rgba(255, 20, 147, ${chargePercent})`;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(soldier.x, soldier.y, 15 + 10 * chargePercent, 0, Math.PI * 2);
+                        ctx.stroke();
+                        // Inner glow
+                        ctx.fillStyle = `rgba(255, 105, 180, ${chargePercent * 0.5})`;
+                        ctx.beginPath();
+                        ctx.arc(soldier.x, soldier.y, 10 * chargePercent, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // Fully charged indicator
+                    if (soldier.chargeTime >= 1500) {
+                        ctx.strokeStyle = '#ff1493';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(soldier.x, soldier.y, 30, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                } else if (soldier.type === 'angel') {
+                    // 天使 - 白色/金色
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = '#ffd700';
+                    ctx.shadowBlur = 15;
+                    // Wings
+                    ctx.fillStyle = '#f0f0f0';
+                    ctx.beginPath();
+                    ctx.ellipse(soldier.x - 15, soldier.y, 12, 8, -0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(soldier.x + 15, soldier.y, 12, 8, 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Body
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y - 5, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Halo
+                    ctx.strokeStyle = '#ffd700';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.ellipse(soldier.x, soldier.y - 22, 10, 4, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    // Shield range indicator
+                    ctx.strokeStyle = 'rgba(135, 206, 250, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y, soldier.range, 0, Math.PI * 2);
+                    ctx.stroke();
+                    // Shield aura when healing
+                    if (soldier.healing) {
+                        ctx.strokeStyle = 'rgba(135, 206, 250, 0.8)';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(soldier.x, soldier.y, soldier.range, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                } else if (soldier.type === 'fairy') {
+                    // 小仙女 - 粉色/紫色发光
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.shadowColor = '#ff1493';
+                    ctx.shadowBlur = 15;
+                    // Small wings (butterfly-like)
+                    ctx.fillStyle = '#dda0dd';
+                    ctx.beginPath();
+                    ctx.ellipse(soldier.x - 12, soldier.y - 5, 8, 5, -0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(soldier.x + 12, soldier.y - 5, 8, 5, 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Body (small)
+                    ctx.fillStyle = '#ffb6c1';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Head
+                    ctx.fillStyle = '#ffcc99';
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y - 10, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Sparkles
+                    ctx.fillStyle = '#ffffff';
+                    for (let i = 0; i < 3; i++) {
+                        const angle = (frameCount * 0.05 + i * 2) % (Math.PI * 2);
+                        const sparkX = soldier.x + Math.cos(angle) * 18;
+                        const sparkY = soldier.y + Math.sin(angle) * 18;
+                        ctx.beginPath();
+                        ctx.arc(sparkX, sparkY, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // Ability range indicator
+                    ctx.strokeStyle = 'rgba(255, 105, 180, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(soldier.x, soldier.y, soldier.range, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // Health bar
+                const hpPercent = soldier.hp / soldier.maxHp;
+                ctx.fillStyle = '#330000';
+                ctx.fillRect(-12, -30, 24, 4);
+                ctx.fillStyle = hpPercent > 0.5 ? '#00ff00' : '#ff0000';
+                ctx.fillRect(-12, -30, 24 * hpPercent, 4);
+
+                // Shield bar (if soldier has shield)
+                if (soldier.shield && soldier.shield > 0) {
+                    const shieldPercent = soldier.shield / 50;
+                    ctx.fillStyle = '#000033';
+                    ctx.fillRect(-12, -25, 24, 3);
+                    ctx.fillStyle = '#87ceeb';
+                    ctx.shadowColor = '#87ceeb';
+                    ctx.shadowBlur = 5;
+                    ctx.fillRect(-12, -25, 24 * shieldPercent, 3);
+                    ctx.shadowBlur = 0;
+                }
+
+                // Charge timer for artillery, laser and fairy (above soldier's head)
+                if ((soldier.type === 'artillery' || soldier.type === 'laser' || soldier.type === 'fairy') && soldier.chargeTime !== undefined) {
+                    const totalTime = soldier.attackSpeed / 60; // seconds
+                    const elapsed = soldier.chargeTime / 60; // seconds
+                    const remaining = Math.max(0, totalTime - elapsed);
+                    const ready = soldier.chargeTime >= soldier.attackSpeed;
+
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    if (ready) {
+                        ctx.fillStyle = '#00ff00';
+                        ctx.shadowColor = '#00ff00';
+                        ctx.shadowBlur = 10;
+                        ctx.fillText('READY!', soldier.x, soldier.y - 45);
+                        ctx.shadowBlur = 0;
+                    } else {
+                        ctx.fillStyle = '#ffd700';
+                        ctx.shadowColor = '#ffd700';
+                        ctx.shadowBlur = 5;
+                        ctx.fillText(remaining.toFixed(1) + 's', soldier.x, soldier.y - 45);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            });
+        }
+
+        // Draw enemies
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                if (enemy.isPig) {
+                    // 大肥猪 - 粉色圆形
+                    ctx.fillStyle = '#ffb6c1';
+                    ctx.shadowColor = '#ff69b4';
+                    ctx.shadowBlur = 15;
+                    // Body (big round)
+                    ctx.beginPath();
+                    ctx.ellipse(enemy.x, enemy.y, enemy.size / 2, enemy.size / 2.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Snout
+                    ctx.fillStyle = '#ff9999';
+                    ctx.beginPath();
+                    ctx.ellipse(enemy.x + 15, enemy.y, 10, 8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Nostrils
+                    ctx.fillStyle = '#cc6666';
+                    ctx.beginPath();
+                    ctx.arc(enemy.x + 12, enemy.y - 2, 2, 0, Math.PI * 2);
+                    ctx.arc(enemy.x + 18, enemy.y - 2, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Eyes (crazy)
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(enemy.x - 5, enemy.y - 10, 6, 0, Math.PI * 2);
+                    ctx.arc(enemy.x + 5, enemy.y - 10, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
+                    ctx.beginPath();
+                    ctx.arc(enemy.x - 4, enemy.y - 10, 3, 0, Math.PI * 2);
+                    ctx.arc(enemy.x + 6, enemy.y - 10, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Ears
+                    ctx.fillStyle = '#ffb6c1';
+                    ctx.beginPath();
+                    ctx.ellipse(enemy.x - 12, enemy.y - 20, 6, 8, -0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(enemy.x + 12, enemy.y - 20, 6, 8, 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = '#8b0000';
+                    ctx.shadowColor = '#4a0000';
+                    ctx.shadowBlur = 10;
+
+                    // Enemy body (dark warrior)
+                    ctx.fillRect(enemy.x - 12, enemy.y - 15, 24, 30);
+
+                    // Helmet
+                    ctx.fillStyle = '#2a2a2a';
+                    ctx.beginPath();
+                    ctx.arc(enemy.x, enemy.y - 18, 8, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Eyes (red glow)
+                    ctx.fillStyle = '#ff0000';
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 8;
+                    ctx.fillRect(enemy.x - 5, enemy.y - 20, 3, 3);
+                    ctx.fillRect(enemy.x + 2, enemy.y - 20, 3, 3);
+                }
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Draw bullets
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                if (bullet.type === 'assassin') {
+                    // 刺客飞镖 - 黑色菱形
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.shadowColor = '#000000';
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(bullet.x, bullet.y - 6);
+                    ctx.lineTo(bullet.x + 4, bullet.y);
+                    ctx.lineTo(bullet.x, bullet.y + 6);
+                    ctx.lineTo(bullet.x - 4, bullet.y);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (bullet.type === 'trebuchet') {
+                    // 投石车石头 - 灰色大圆
+                    ctx.fillStyle = '#696969';
+                    ctx.shadowColor = '#404040';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (bullet.type === 'artillery') {
+                    // 炮兵炮弹 - 大红球
+                    ctx.fillStyle = '#ff0000';
+                    ctx.shadowColor = '#ff4500';
+                    ctx.shadowBlur = 20;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Inner glow
+                    ctx.fillStyle = '#ff8c00';
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (bullet.type === 'laser') {
+                    // 激光炮弹 - 亮粉色光束
+                    ctx.fillStyle = '#ff1493';
+                    ctx.shadowColor = '#ff69b4';
+                    ctx.shadowBlur = 25;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Core
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (bullet.type === 'machinegun') {
+                    // 机枪子弹 - 黄色小点
+                    ctx.fillStyle = '#ffd700';
+                    ctx.shadowColor = '#ffff00';
+                    ctx.shadowBlur = 5;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // 弓箭 - 金色
+                    ctx.fillStyle = '#ffd700';
+                    ctx.shadowColor = '#ffa500';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Update enemy bullets
+        function updateEnemyBullets() {
+            enemyBullets = enemyBullets.filter(bullet => {
+                if (bullet.type === 'firecracker' && !bullet.exploding) {
+                    // Firecracker moves to target then explodes
+                    const dx = bullet.targetX - bullet.x;
+                    const dy = bullet.targetY - bullet.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 20) {
+                        // Explode into circle of many fireballs
+                        for (let i = 0; i < 24; i++) {
+                            const angle = (Math.PI * 2 * i) / 24;
+                            const speed = 4 + Math.random() * 4;
+                            enemyBullets.push({
+                                x: bullet.x,
+                                y: bullet.y,
+                                vx: Math.cos(angle) * speed,
+                                vy: Math.sin(angle) * speed,
+                                size: 8,
+                                color: '255, 100, 0',
+                                damage: 15,
+                                type: 'fireball'
+                            });
+                        }
+                        return false;
+                    }
+                    bullet.x += bullet.vx;
+                    bullet.y += bullet.vy;
+                } else {
+                    bullet.x += bullet.vx;
+                    bullet.y += bullet.vy;
+                }
+
+                // Check collision with soldiers
+                soldiers.forEach(soldier => {
+                    const dx = soldier.x - bullet.x;
+                    const dy = soldier.y - bullet.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 25) {
+                        // Shield absorbs damage first
+                        if (soldier.shield && soldier.shield > 0) {
+                            const absorbed = Math.min(soldier.shield, bullet.damage);
+                            soldier.shield -= absorbed;
+                            bullet.damage -= absorbed;
+                            spawnExplosion(soldier.x, soldier.y, '135, 206, 250', 5);
+                            if (bullet.damage <= 0) {
+                                bullet.hit = true;
+                                return;
+                            }
+                        }
+                        soldier.hp -= bullet.damage;
+                        spawnExplosion(soldier.x, soldier.y, bullet.color, 10);
+                        playSound('hit');
+                        bullet.hit = true;
+                    }
+                });
+
+                return bullet.x > -50 && bullet.x < canvas.width + 50 &&
+                       bullet.y > -50 && bullet.y < canvas.height + 50 &&
+                       !bullet.hit;
+            });
+        }
+
+        // Draw enemy bullets
+        function drawEnemyBullets() {
+            enemyBullets.forEach(bullet => {
+                const [r, g, b] = bullet.color.split(',').map(Number);
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            // Draw ice minions
+            if (boss && boss.minions) {
+                boss.minions.forEach(minion => {
+                    ctx.fillStyle = '#9400d3';
+                    ctx.shadowColor = '#4b0082';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.arc(minion.x, minion.y, minion.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                });
+            }
+        }
+
+        // Draw boss
+        function drawBoss() {
+            if (!boss) return;
+
+            const b = boss;
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(b.x, b.y + 40, b.size / 2, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body
+            ctx.fillStyle = '#8b0000';
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 20;
+            ctx.fillRect(b.x - b.size / 2, b.y - b.size / 2, b.size, b.size);
+
+            // Armor details
+            ctx.fillStyle = '#4a0000';
+            ctx.fillRect(b.x - b.size / 3, b.y - b.size / 3, b.size / 1.5, b.size / 1.5);
+
+            // Helmet
+            ctx.fillStyle = '#2a2a2a';
+            ctx.beginPath();
+            ctx.arc(b.x, b.y - b.size / 3, b.size / 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Crown/horn
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.moveTo(b.x - 15, b.y - b.size / 2);
+            ctx.lineTo(b.x, b.y - b.size / 2 - 25);
+            ctx.lineTo(b.x + 15, b.y - b.size / 2);
+            ctx.fill();
+
+            // Glowing eyes
+            ctx.fillStyle = '#ffff00';
+            ctx.shadowColor = '#ffff00';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(b.x - 10, b.y - b.size / 4, 5, 0, Math.PI * 2);
+            ctx.arc(b.x + 10, b.y - b.size / 4, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+        }
+
+        // Draw particles
+        function drawParticles() {
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                p.vy += 0.1;
+
+                const alpha = p.life / p.maxLife;
+                ctx.fillStyle = `rgba(${p.color}, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            particles = particles.filter(p => p.life > 0);
+        }
+
+        // Spawn explosion
+        function spawnExplosion(x, y, color, count = 15) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    size: Math.random() * 4 + 2,
+                    life: 25,
+                    maxLife: 25,
+                    color: color
+                });
+            }
+        }
+
+        // Spawn energy block
+        function spawnEnergyBlock() {
+            energyBlocks.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: -20,
+                size: 20,
+                speed: 2 + Math.random()
+            });
+        }
+
+        // Update energy blocks
+        function updateEnergyBlocks() {
+            energyBlocks.forEach(block => {
+                block.y += block.speed;
+            });
+            energyBlocks = energyBlocks.filter(block => block.y < canvas.height + 30);
+        }
+
+        // Spawn enemy
+        function spawnEnemy() {
+            const types = ['soldier', 'archer', 'heavy'];
+            const type = types[Math.floor(Math.random() * types.length)];
+
+            let hp = 1, speed = 2, size = 20, damage = 10;
+
+            if (type === 'archer') {
+                hp = 1; speed = 3; size = 18; damage = 5;
+            } else if (type === 'heavy') {
+                hp = 3; speed = 1; size = 28; damage = 20;
+            }
+
+            enemies.push({
+                x: canvas.width + 20,
+                y: Math.random() * (canvas.height - 100) + 50,
+                width: size,
+                height: size,
+                baseSpeed: speed + (score / 2000),
+                speed: speed + (score / 2000),
+                slowTimer: 0,
+                hp: hp,
+                maxHp: hp,
+                damage: damage,
+                type: type,
+                lastAttack: frameCount
+            });
+        }
+
+        // Update enemies
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                // 猪的特殊行为
+                if (enemy.isPig) {
+                    // 猪寻找最近的敌人追击
+                    let nearestEnemy = null;
+                    let minDist = 400;
+                    enemies.forEach(other => {
+                        if (other === enemy || other.isPig) return;
+                        const dx = other.x - enemy.x;
+                        const dy = other.y - enemy.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            nearestEnemy = other;
+                        }
+                    });
+                    // 如果找到敌人，追击
+                    if (nearestEnemy) {
+                        const dx = nearestEnemy.x - enemy.x;
+                        const dy = nearestEnemy.y - enemy.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist > 0) {
+                            enemy.x += (dx / dist) * enemy.speed;
+                            enemy.y += (dy / dist) * enemy.speed;
+                        }
+                        // 接近敌人时造成范围伤害
+                        if (dist < 50) {
+                            // 对所有敌人造成300点伤害
+                            enemies.forEach(other => {
+                                if (other !== enemy && !other.isPig) {
+                                    const odx = other.x - enemy.x;
+                                    const ody = other.y - enemy.y;
+                                    const odist = Math.sqrt(odx * odx + ody * ody);
+                                    if (odist < 100) {
+                                        other.hp -= 300;
+                                        spawnExplosion(other.x, other.y, '255, 182, 193', 15);
+                                    }
+                                }
+                            });
+                            // 对boss造成伤害
+                            if (boss) {
+                                const bdx = boss.x - enemy.x;
+                                const bdy = boss.y - enemy.y;
+                                const bdist = Math.sqrt(bdx * bdx + bdy * bdy);
+                                if (bdist < 100) {
+                                    boss.hp -= 300;
+                                    spawnExplosion(boss.x, boss.y, '255, 182, 193', 20);
+                                }
+                            }
+                            // 猪爆炸后消失
+                            enemy.hp = 0;
+                            spawnExplosion(enemy.x, enemy.y, '255, 105, 180', 25);
+                        }
+                    }
+                    return; // 猪不执行下面的逻辑
+                }
+
+                // 应用减速效果
+                let currentSpeed = enemy.baseSpeed;
+                if (enemy.slowTimer > 0) {
+                    currentSpeed *= 0.5; // 减速50%
+                    enemy.slowTimer--;
+                }
+                enemy.x -= currentSpeed;
+
+                // Attack soldiers
+                soldiers.forEach(soldier => {
+                    const dx = soldier.x - enemy.x;
+                    const dy = soldier.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    // 减速兵范围攻击
+                    if (soldier.type === 'slow' && dist < soldier.range && frameCount - soldier.lastAttack > soldier.attackSpeed) {
+                        enemy.slowTimer = 60; // 减速1秒
+                        soldier.lastAttack = frameCount;
+                        spawnExplosion(enemy.x, enemy.y, '0, 255, 255', 8);
+                    }
+
+                    if (dist < 40 && frameCount - enemy.lastAttack > 30) {
+                        let damage = enemy.damage;
+                        // Shield absorbs damage first
+                        if (soldier.shield && soldier.shield > 0) {
+                            const absorbed = Math.min(soldier.shield, damage);
+                            soldier.shield -= absorbed;
+                            damage -= absorbed;
+                            spawnExplosion(soldier.x, soldier.y, '135, 206, 250', 5);
+                            if (damage <= 0) {
+                                enemy.lastAttack = frameCount;
+                                return;
+                            }
+                        }
+                        soldier.hp -= damage;
+                        enemy.lastAttack = frameCount;
+                        spawnExplosion(soldier.x, soldier.y, '255, 0, 0', 5);
+                        playSound('hit');
+                    }
+                });
+            });
+
+            enemies = enemies.filter(enemy => {
+                // Remove if dead (猪不加分)
+                if (enemy.hp <= 0) {
+                    if (!enemy.isPig) {
+                        score += 10;
+                        spawnExplosion(enemy.x, enemy.y, '139, 0, 0');
+                        playSound('enemy');
+                    }
+                    return false;
+                }
+                // Remove if reached left edge (猪不移向左边)
+                if (!enemy.isPig && enemy.x < -20) {
+                    playerHp -= enemy.damage;
+                    updatePlayerHpBar();
+                    spawnExplosion(0, enemy.y, '255, 0, 0', 10);
+                    playSound('hit');
+                    return false;
+                }
+                return true;
+            });
+
+            // Check if player is dead
+            if (playerHp <= 0) {
+                gameOver();
+            }
+        }
+
+        // Spawn soldier (random type)
+        function spawnSoldier(x, y, type) {
+            // If type not specified, random select (for backwards compatibility)
+            if (!type) {
+                const types = ['sword', 'bow', 'spear', 'assassin', 'trebuchet', 'collector', 'slow', 'artillery', 'machinegun', 'laser', 'angel', 'fairy'];
+                type = types[Math.floor(Math.random() * types.length)];
+            }
+
+            let hp = 30, damage = 10, range = 30, attackSpeed = 30;
+
+            if (type === 'bow') {
+                hp = 20; damage = 8; range = 200; attackSpeed = 45;
+            } else if (type === 'spear') {
+                hp = 40; damage = 12; range = 45; attackSpeed = 25;
+            } else if (type === 'assassin') {
+                hp = 20; damage = 15; range = 120; attackSpeed = 15;
+            } else if (type === 'trebuchet') {
+                hp = 80; damage = 25; range = 300; attackSpeed = 90;
+            } else if (type === 'collector') {
+                hp = 35; damage = 5; range = 60; attackSpeed = 20;
+                // 收集兵自动收集能量
+                energy += 1;
+                if (energy > 5) energy = 5;
+                energyCountEl.textContent = energy;
+                if (energy >= 5) {
+                    soldierTypeHint.style.display = 'block';
+                    soldierTypeHint.textContent = '点击战场放置士兵';
+                }
+                spawnExplosion(x, y, '0, 255, 0', 15);
+                playSound('collect');
+            } else if (type === 'slow') {
+                hp = 50; damage = 3; range = 80; attackSpeed = 60;
+            } else if (type === 'artillery') {
+                // 炮兵 - 高伤害炮弹，8秒间隔
+                hp = 120; damage = 100; range = 500; attackSpeed = 480; // 480 frames = 8 seconds
+            } else if (type === 'machinegun') {
+                // 机枪兵 - 持续向前发射子弹
+                hp = 30; damage = 3; range = 150; attackSpeed = 5; // Very fast attack
+            } else if (type === 'laser') {
+                // 激光兵 - 20秒蓄力后发射全图穿透炮弹
+                hp = 80; damage = 150; range = 600; attackSpeed = 1200; // 1200 frames = 20 seconds
+            } else if (type === 'angel') {
+                // 天使 - 给周围友军加护盾
+                hp = 50; damage = 0; range = 100; attackSpeed = 180; // 每3秒给护盾
+            } else if (type === 'fairy') {
+                // 小仙女 - 10秒让敌方小兵变成大肥猪
+                hp = 60; damage = 0; range = 200; attackSpeed = 600; // 600 frames = 10 seconds
+            }
+
+            soldiers.push({
+                x: x,
+                y: y,
+                type: type,
+                hp: hp,
+                maxHp: hp,
+                damage: damage,
+                range: range,
+                attackSpeed: attackSpeed,
+                lastAttack: frameCount,
+                lifetime: 1800, // 30 seconds at 60fps
+                chargeTime: (type === 'artillery' || type === 'laser' || type === 'fairy') ? 0 : undefined,
+                direction: 1, // For machine gunner firing direction
+                shield: (type === 'angel') ? 30 : 0, // Angel's shield amount
+                lastShield: 0 // Last frame when shield was applied
+            });
+
+            playSound('spawn');
+            spawnExplosion(x, y, '255, 215, 0', 20);
+        }
+
+        // Update soldiers
+        function updateSoldiers() {
+            soldiers.forEach(soldier => {
+                soldier.lifetime--;
+
+                // Collector auto-collect energy within 50px
+                if (soldier.type === 'collector') {
+                    energyBlocks = energyBlocks.filter(block => {
+                        const dist = Math.sqrt((block.x - soldier.x)**2 + (block.y - soldier.y)**2);
+                        if (dist < 50) {
+                            energy += 1;
+                            if (energy > 5) energy = 5;
+                            spawnExplosion(block.x, block.y, '0, 255, 0', 10);
+                            playSound('collect');
+                            return false;
+                        }
+                        return true;
+                    });
+                    // Update UI
+                    energyCountEl.textContent = energy;
+                    if (energy >= 5) {
+                        soldierTypeHint.style.display = 'block';
+                        soldierTypeHint.textContent = '点击战场放置士兵';
+                    }
+                }
+
+                // Find nearest enemy in range
+                let target = null;
+                let minDist = soldier.range;
+
+                enemies.forEach(enemy => {
+                    const dx = enemy.x - soldier.x;
+                    const dy = enemy.y - soldier.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < minDist) {
+                        minDist = dist;
+                        target = enemy;
+                    }
+                });
+
+                // Boss as target
+                if (boss) {
+                    const dx = boss.x - soldier.x;
+                    const dy = boss.y - soldier.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < soldier.range + 50 && dist < minDist) {
+                        minDist = dist;
+                        target = boss;
+                    }
+                }
+
+                // Attack
+                if (soldier.type === 'machinegun') {
+                    // 机枪兵 - 持续向前发射三行子弹
+                    soldier.firing = false;
+                    if (frameCount - soldier.lastAttack > soldier.attackSpeed) {
+                        soldier.lastAttack = frameCount;
+                        soldier.firing = true;
+                        // 三行子弹：上、中、下
+                        const angles = [-0.2, 0, 0.2]; // 上、中、下 散射角度
+                        angles.forEach(angle => {
+                            bullets.push({
+                                x: soldier.x + 20,
+                                y: soldier.y,
+                                vx: Math.cos(angle) * 15,
+                                vy: Math.sin(angle) * 15,
+                                target: null,
+                                damage: soldier.damage,
+                                type: 'machinegun',
+                                piercing: false
+                            });
+                        });
+                    }
+                } else if (soldier.type === 'artillery') {
+                    // 炮兵 - 蓄力10秒后发射高伤害炮弹
+                    if (!soldier.chargeTime) soldier.chargeTime = 0;
+                    soldier.chargeTime++;
+
+                    // Find nearest enemy for targeting
+                    if (target) {
+                        soldier.targetX = target.x;
+                        soldier.targetY = target.y;
+                    }
+
+                    if (soldier.chargeTime >= soldier.attackSpeed) {
+                        // Fire cannon shell
+                        soldier.chargeTime = 0;
+                        if (soldier.targetX !== undefined) {
+                            const angle = Math.atan2(soldier.targetY - soldier.y, soldier.targetX - soldier.x);
+                            bullets.push({
+                                x: soldier.x,
+                                y: soldier.y,
+                                vx: Math.cos(angle) * 8,
+                                vy: Math.sin(angle) * 8,
+                                target: null,
+                                damage: soldier.damage,
+                                type: 'artillery',
+                                piercing: false,
+                                AOE: 60 // Area of effect radius
+                            });
+                            spawnExplosion(soldier.x, soldier.y, '255, 100, 0', 10);
+                        }
+                    }
+                } else if (soldier.type === 'laser') {
+                    // 激光兵 - 蓄力25秒后发射全图穿透炮弹
+                    if (!soldier.chargeTime) soldier.chargeTime = 0;
+                    soldier.chargeTime++;
+
+                    // Find nearest enemy for initial direction
+                    if (target && !soldier.laserFired) {
+                        soldier.targetX = target.x;
+                        soldier.targetY = target.y;
+                    }
+
+                    if (soldier.chargeTime >= soldier.attackSpeed && !soldier.laserFired) {
+                        // Fire laser beam
+                        soldier.chargeTime = 0;
+                        soldier.laserFired = true;
+                        if (soldier.targetX !== undefined) {
+                            const angle = Math.atan2(soldier.targetY - soldier.y, soldier.targetX - soldier.x);
+                            bullets.push({
+                                x: soldier.x,
+                                y: soldier.y,
+                                vx: Math.cos(angle) * 12,
+                                vy: Math.sin(angle) * 12,
+                                target: null,
+                                damage: soldier.damage,
+                                type: 'laser',
+                                piercing: true, // Goes through all enemies
+                                piercedEnemies: [] // Track which enemies have been hit
+                            });
+                            spawnExplosion(soldier.x, soldier.y, '255, 20, 147', 20);
+                            playSound('hit');
+                        }
+                    }
+
+                    // Reset laser fired flag after 60 frames (1 second cooldown before next charge)
+                    if (soldier.laserFired && soldier.chargeTime > 60) {
+                        soldier.laserFired = false;
+                        soldier.chargeTime = 0;
+                    }
+                } else if (soldier.type === 'angel') {
+                    // 天使 - 给周围友军加护盾
+                    soldier.healing = false;
+                    if (frameCount - soldier.lastAttack >= soldier.attackSpeed) {
+                        soldier.lastAttack = frameCount;
+                        soldier.healing = true;
+                        // 给范围内所有友军加护盾
+                        soldiers.forEach(ally => {
+                            if (ally === soldier) return;
+                            const dx = ally.x - soldier.x;
+                            const dy = ally.y - soldier.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < soldier.range) {
+                                ally.shield = (ally.shield || 0) + 20;
+                                if (ally.shield > 50) ally.shield = 50; // Max shield 50
+                                spawnExplosion(ally.x, ally.y, '135, 206, 250', 5);
+                            }
+                        });
+                    }
+                } else if (soldier.type === 'fairy') {
+                    // 小仙女 - 时间到了就召唤大肥猪
+                    if (!soldier.chargeTime) soldier.chargeTime = 0;
+                    soldier.chargeTime++;
+                    soldier.healing = false;
+
+                    if (soldier.chargeTime >= soldier.attackSpeed) {
+                        soldier.chargeTime = 0;
+                        // 在仙女位置召唤一只大肥猪
+                        enemies.push({
+                            x: soldier.x,
+                            y: soldier.y,
+                            type: 'pig',
+                            hp: 80,
+                            maxHp: 80,
+                            speed: 2.5,
+                            size: 40,
+                            damage: 40,
+                            isPig: true,
+                            baseSpeed: 2.5,
+                            slowTimer: 0,
+                            lastAttack: frameCount
+                        });
+                        soldier.healing = true;
+                        spawnExplosion(soldier.x, soldier.y, '255, 182, 193', 15);
+                    }
+                } else if (target && frameCount - soldier.lastAttack > soldier.attackSpeed) {
+                    soldier.lastAttack = frameCount;
+
+                    if (soldier.type === 'bow' || soldier.type === 'assassin' || soldier.type === 'trebuchet') {
+                        // Ranged - spawn projectile
+                        bullets.push({
+                            x: soldier.x,
+                            y: soldier.y,
+                            target: target,
+                            speed: soldier.type === 'assassin' ? 12 : (soldier.type === 'trebuchet' ? 5 : 8),
+                            damage: soldier.damage,
+                            type: soldier.type,
+                            piercing: false
+                        });
+                    } else {
+                        // Melee - instant damage
+                        target.hp -= soldier.damage;
+                        spawnExplosion(target.x, target.y, '255, 255, 0', 8);
+                        playSound('hit');
+                    }
+                }
+            });
+
+            // Remove dead or expired soldiers
+            soldiers = soldiers.filter(soldier => soldier.hp > 0);
+        }
+
+        // Update bullets
+        function updateBullets() {
+            bullets.forEach(bullet => {
+                if (bullet.target) {
+                    const dx = bullet.target.x - bullet.x;
+                    const dy = bullet.target.y - bullet.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist > 0) {
+                        bullet.x += (dx / dist) * bullet.speed;
+                        bullet.y += (dy / dist) * bullet.speed;
+                    }
+
+                    // Hit check
+                    if (dist < 20) {
+                        bullet.target.hp -= bullet.damage;
+                        spawnExplosion(bullet.x, bullet.y, '255, 255, 0', 5);
+                        playSound('hit');
+                        bullet.hit = true;
+                    }
+                } else if (bullet.vx !== undefined && bullet.vy !== undefined) {
+                    // Move bullet by velocity (machinegun, artillery, laser)
+                    bullet.x += bullet.vx;
+                    bullet.y += bullet.vy;
+
+                    // Machinegun - instant hit on enemies in path
+                    if (bullet.type === 'machinegun') {
+                        enemies.forEach(enemy => {
+                            const dx = enemy.x - bullet.x;
+                            const dy = enemy.y - bullet.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 20) {
+                                enemy.hp -= bullet.damage;
+                                spawnExplosion(bullet.x, bullet.y, '255, 255, 0', 3);
+                                bullet.hit = true;
+                            }
+                        });
+                        // Also check boss
+                        if (boss && !bullet.hit) {
+                            const dx = boss.x - bullet.x;
+                            const dy = boss.y - bullet.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 50) {
+                                boss.hp -= bullet.damage;
+                                spawnExplosion(bullet.x, bullet.y, '255, 255, 0', 3);
+                                bullet.hit = true;
+                            }
+                        }
+                    }
+
+                    // Artillery - AOE damage on impact with ground or enemy
+                    if (bullet.type === 'artillery' && bullet.AOE) {
+                        let impact = false;
+                        // Check if near any enemy
+                        enemies.forEach(enemy => {
+                            const dx = enemy.x - bullet.x;
+                            const dy = enemy.y - bullet.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < bullet.AOE) {
+                                enemy.hp -= bullet.damage;
+                                spawnExplosion(bullet.x, bullet.y, '255, 100, 0', 15);
+                                impact = true;
+                            }
+                        });
+                        // Check boss
+                        if (boss) {
+                            const dx = boss.x - bullet.x;
+                            const dy = boss.y - bullet.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < bullet.AOE + 30) {
+                                boss.hp -= bullet.damage;
+                                spawnExplosion(bullet.x, bullet.y, '255, 100, 0', 20);
+                                impact = true;
+                            }
+                        }
+                        if (impact) {
+                            bullet.hit = true;
+                        }
+                    }
+
+                    // Laser - piercing, hits all enemies in path
+                    if (bullet.type === 'laser' && bullet.piercing) {
+                        enemies.forEach(enemy => {
+                            // Skip already pierced enemies
+                            if (bullet.piercedEnemies && bullet.piercedEnemies.includes(enemy)) return;
+
+                            const dx = enemy.x - bullet.x;
+                            const dy = enemy.y - bullet.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 30) {
+                                enemy.hp -= bullet.damage;
+                                if (!bullet.piercedEnemies) bullet.piercedEnemies = [];
+                                bullet.piercedEnemies.push(enemy);
+                                spawnExplosion(bullet.x, bullet.y, '255, 20, 147', 10);
+                            }
+                        });
+                        // Also damage boss
+                        if (boss) {
+                            const dx = boss.x - bullet.x;
+                            const dy = boss.y - bullet.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 50) {
+                                boss.hp -= bullet.damage;
+                                spawnExplosion(bullet.x, bullet.y, '255, 20, 147', 15);
+                            }
+                        }
+                    }
+                }
+            });
+
+            bullets = bullets.filter(b => !b.hit && b.x > -50 && b.x < canvas.width + 50 && b.y > -50 && b.y < canvas.height + 50);
+        }
+
+        // Spawn boss
+        function spawnBoss() {
+            boss = {
+                x: canvas.width + 60,
+                y: canvas.height / 2,
+                size: 80,
+                hp: 5000,
+                maxHp: 2500,
+                phase: 1,
+                speed: 1.5,
+                damage: 50,
+                lastAttack: frameCount,
+                lastSpecial: frameCount,
+                minions: []
+            };
+            bossHpContainer.classList.add('active');
+            playSound('boss');
+
+            // Spawn warning message
+            spawnExplosion(canvas.width - 50, canvas.height / 2, '255, 0, 0', 30);
+        }
+
+        // Update boss
+        function updateBoss() {
+            if (!boss) return;
+
+            // Determine phase based on HP percentage
+            const hpPercent = (boss.hp / boss.maxHp) * 100;
+            if (hpPercent > 60) {
+                boss.phase = 1;
+            } else if (hpPercent > 30) {
+                boss.phase = 2;
+            } else {
+                boss.phase = 3;
+            }
+
+            // Move boss
+            if (boss.x > canvas.width - 100) {
+                boss.x -= boss.speed;
+            }
+
+            // Phase-specific attacks
+            if (boss.phase === 1) {
+                // Phase 1: Fan-shaped fireballs (every 90 frames)
+                if (frameCount - boss.lastSpecial > 90) {
+                    for (let i = -2; i <= 2; i++) {
+                        const angle = Math.PI + i * 0.3;
+                        enemyBullets.push({
+                            x: boss.x,
+                            y: boss.y,
+                            vx: Math.cos(angle) * 4,
+                            vy: Math.sin(angle) * 4,
+                            size: 15,
+                            color: '255, 100, 0',
+                            damage: 15,
+                            type: 'fireball'
+                        });
+                    }
+                    boss.lastSpecial = frameCount;
+                    playSound('shoot');
+                }
+            } else if (boss.phase === 2) {
+                // Phase 2: Fireballs + purple ice minions (every 60 frames)
+                if (frameCount - boss.lastSpecial > 60) {
+                    // Fan fireballs
+                    for (let i = -2; i <= 2; i++) {
+                        const angle = Math.PI + i * 0.3;
+                        enemyBullets.push({
+                            x: boss.x,
+                            y: boss.y,
+                            vx: Math.cos(angle) * 5,
+                            vy: Math.sin(angle) * 5,
+                            size: 15,
+                            color: '255, 100, 0',
+                            damage: 15,
+                            type: 'fireball'
+                        });
+                    }
+                    // Spawn ice minion
+                    boss.minions.push({
+                        x: boss.x - 50,
+                        y: Math.random() * canvas.height,
+                        size: 25,
+                        hp: 30,
+                        speed: 2,
+                        type: 'ice'
+                    });
+                    boss.lastSpecial = frameCount;
+                    playSound('shoot');
+                }
+
+                // Update ice minions
+                boss.minions = boss.minions.filter(minion => {
+                    minion.x -= minion.speed;
+                    // Check collision with soldiers
+                    soldiers.forEach(soldier => {
+                        const dx = soldier.x - minion.x;
+                        const dy = soldier.y - minion.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 30) {
+                            let damage = 20;
+                            // Shield absorbs damage first
+                            if (soldier.shield && soldier.shield > 0) {
+                                const absorbed = Math.min(soldier.shield, damage);
+                                soldier.shield -= absorbed;
+                                damage -= absorbed;
+                                spawnExplosion(soldier.x, soldier.y, '135, 206, 250', 5);
+                                if (damage <= 0) {
+                                    minion.hp = 0;
+                                    return;
+                                }
+                            }
+                            soldier.hp -= damage;
+                            spawnExplosion(soldier.x, soldier.y, '150, 0, 255', 10);
+                            minion.hp = 0;
+                        }
+                    });
+                    return minion.x > -50 && minion.hp > 0;
+                });
+            } else if (boss.phase === 3) {
+                // Phase 3: Firecracker explosion + circle fireballs (every 30 frames)
+                if (frameCount - boss.lastSpecial > 30) {
+                    // Firecracker warning (target random soldier) - 分散发射多个
+                    for (let i = 0; i < 3; i++) {
+                        const targetSoldier = soldiers[Math.floor(Math.random() * soldiers.length)];
+                        if (targetSoldier) {
+                            const angle = Math.atan2(targetSoldier.y - boss.y, targetSoldier.x - boss.x) + (Math.random() - 0.5) * 0.5;
+                            const speed = 3 + Math.random() * 2;
+                            enemyBullets.push({
+                                x: boss.x,
+                                y: boss.y,
+                                targetX: targetSoldier.x + (Math.random() - 0.5) * 100,
+                                targetY: targetSoldier.y + (Math.random() - 0.5) * 100,
+                                vx: Math.cos(angle) * speed,
+                                vy: Math.sin(angle) * speed,
+                                size: 20,
+                                color: '255, 200, 0',
+                                damage: 20,
+                                type: 'firecracker',
+                                exploding: false
+                            });
+                        }
+                    }
+                    boss.lastSpecial = frameCount;
+                    playSound('shoot');
+                }
+            }
+
+            // Attack soldiers
+            soldiers.forEach(soldier => {
+                const dx = soldier.x - boss.x;
+                const dy = soldier.y - boss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 60 && frameCount - boss.lastAttack > 60) {
+                    let damage = boss.damage;
+                    // Shield absorbs damage first
+                    if (soldier.shield && soldier.shield > 0) {
+                        const absorbed = Math.min(soldier.shield, damage);
+                        soldier.shield -= absorbed;
+                        damage -= absorbed;
+                        spawnExplosion(soldier.x, soldier.y, '135, 206, 250', 5);
+                        if (damage <= 0) {
+                            boss.lastAttack = frameCount;
+                            return;
+                        }
+                    }
+                    soldier.hp -= damage;
+                    boss.lastAttack = frameCount;
+                    spawnExplosion(soldier.x, soldier.y, '255, 0, 0', 10);
+                    playSound('hit');
+                }
+            });
+
+            // Update HP bar
+            bossHpFill.style.width = hpPercent + '%';
+
+            // Boss death
+            if (boss.hp <= 0) {
+                bossDefeated = true;
+                score += 500;
+                spawnExplosion(boss.x, boss.y, '255, 0, 0', 50);
+                spawnExplosion(boss.x, boss.y, '255, 215, 0', 30);
+                playSound('boss');
+                boss = null;
+                bossHpContainer.classList.remove('active');
+                victory();
+            }
+        }
+
+        // Check collisions with player (for collecting energy)
+        function checkEnergyCollection(mouseX, mouseY) {
+            // Check if clicking near energy blocks to collect
+            energyBlocks = energyBlocks.filter(block => {
+                const dx = mouseX - block.x;
+                const dy = mouseY - block.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 40) {
+                    energy++;
+                    spawnExplosion(block.x, block.y, '0, 255, 0', 10);
+                    playSound('collect');
+                    return false;
+                }
+                return true;
+            });
+
+            // Auto collect when full
+            if (energy >= 5) {
+                energyCountEl.textContent = energy;
+                soldierTypeHint.style.display = 'block';
+                soldierTypeHint.textContent = '点击战场放置士兵';
+            } else {
+                energyCountEl.textContent = energy;
+            }
+        }
+
+        // Place soldier
+        function placeSoldier(x, y) {
+            if (energy >= 5) {
+                spawnSoldier(x, y);
+                energy -= 5;
+                energyCountEl.textContent = energy;
+                if (energy < 5) {
+                    soldierTypeHint.style.display = 'none';
+                }
+            }
+        }
+
+        // Update player HP bar
+        function updatePlayerHpBar() {
+            const hpPercent = (playerHp / maxPlayerHp) * 100;
+            playerHpFill.style.width = hpPercent + '%';
+
+            if (hpPercent > 60) {
+                playerHpFill.style.background = '#ff6600';
+            } else if (hpPercent > 30) {
+                playerHpFill.style.background = '#ffaa00';
+            } else {
+                playerHpFill.style.background = '#ff3300';
+            }
+        }
+
+        // Game over
+        function gameOver() {
+            gameState = 'gameover';
+            finalTimeEl.textContent = gameTime;
+            finalScoreEl.textContent = score;
+            gameOverScreen.classList.add('active');
+        }
+
+        // Victory
+        function victory() {
+            gameState = 'victory';
+            victoryTimeEl.textContent = gameTime;
+            victoryScoreEl.textContent = score;
+            victoryScreen.classList.add('active');
+        }
+
+        // Reset game
+        function resetGame() {
+            score = 0;
+            energy = 0;
+            gameTime = 0;
+            frameCount = 0;
+            playerHp = 100;
+            bossSpawned = false;
+            bossDefeated = false;
+
+            energyBlocks = [];
+            soldiers = [];
+            enemies = [];
+            bullets = [];
+            enemyBullets = [];
+            particles = [];
+            boss = null;
+
+            energyCountEl.textContent = '0';
+            gameTimeEl.textContent = '0';
+            scoreEl.textContent = '0';
+            soldierCountEl.textContent = '0';
+            soldierTypeHint.style.display = 'none';
+
+            bossHpContainer.classList.remove('active');
+            bossHpFill.style.width = '100%';
+            updatePlayerHpBar();
+        }
+
+        // Main game loop
+        function gameLoop() {
+            drawBackground();
+
+            if (gameState === 'playing') {
+                frameCount++;
+
+                // Update time every second
+                if (frameCount % 60 === 0) {
+                    gameTime++;
+                    gameTimeEl.textContent = gameTime;
+                }
+
+                // Score increases over time
+                if (frameCount % 60 === 0) {
+                    score += 1;
+                    scoreEl.textContent = score;
+                }
+
+                // Spawn energy blocks
+                if (frameCount % 90 === 0) {
+                    spawnEnergyBlock();
+                }
+
+                // Spawn enemies - difficulty scaling
+                let spawnRate;
+                if (gameTime < 60) {
+                    // 前期 (0-60秒): 少量敌人
+                    spawnRate = Math.max(180, 240 - gameTime * 2);
+                } else if (gameTime < 100) {
+                    // 中期 (60-100秒): 逐渐增加
+                    spawnRate = Math.max(90, 180 - (gameTime - 60));
+                } else {
+                    // 后期 (100秒后BOSS出现): 敌人大量增加
+                    spawnRate = Math.max(30, 60 - (gameTime - 100) * 0.5);
+                }
+                if (frameCount % Math.floor(spawnRate) === 0) {
+                    spawnEnemy();
+                }
+
+                // Spawn boss at 100 seconds
+                if (gameTime >= 100 && !bossSpawned && !bossDefeated) {
+                    spawnBoss();
+                    bossSpawned = true;
+                }
+
+                // Update
+                updateEnergyBlocks();
+                updateSoldiers();
+                updateEnemies();
+                updateBullets();
+                updateEnemyBullets();
+                updateBoss();
+
+                // Update soldier count display
+                soldierCountEl.textContent = soldiers.length;
+
+                // Draw game objects
+                drawEnergyBlocks();
+                drawBullets();
+                drawEnemyBullets();
+                drawEnemies();
+                drawBoss();
+                drawSoldiers();
+                drawParticles();
+
+            } else if (gameState === 'gameover' || gameState === 'victory') {
+                // Still draw objects in background
+                drawEnergyBlocks();
+                drawEnemies();
+                drawBoss();
+                drawSoldiers();
+                drawParticles();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Input handling - add to game container
+        document.querySelector('.game-container').addEventListener('click', (e) => {
+            if (gameState === 'start') {
+                initAudio();
+                gameState = 'playing';
+                startScreen.classList.add('hidden');
+            } else if (gameState === 'playing') {
+                const rect = canvas.getBoundingClientRect();
+                // 将点击坐标转换为画布内部坐标
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+
+                if (energy >= 5) {
+                    placeSoldier(x, y);
+                } else {
+                    checkEnergyCollection(x, y);
+                }
+            } else if (gameState === 'gameover' || gameState === 'victory') {
+                gameOverScreen.classList.remove('active');
+                victoryScreen.classList.remove('active');
+                resetGame();
+                gameState = 'playing';
+            }
+        });
+
+        // Responsive canvas sizing
+        function resizeCanvas() {
+            const container = document.querySelector('.game-container');
+            const maxWidth = 800;
+            const maxHeight = 600;
+            const aspectRatio = maxWidth / maxHeight;
+
+            let width = Math.min(window.innerWidth - 20, maxWidth);
+            let height = width / aspectRatio;
+
+            if (height > window.innerHeight - 20) {
+                height = window.innerHeight - 20;
+                width = height * aspectRatio;
+            }
+
+            container.style.width = width + 'px';
+            container.style.height = height + 'px';
+            canvas.width = maxWidth;
+            canvas.height = maxHeight;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+        }
+
+        // 移动端触摸支持 - 使用wrapper捕获触摸
+        document.querySelector('.game-wrapper').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState === 'start') {
+                initAudio();
+                gameState = 'playing';
+                startScreen.classList.add('hidden');
+            } else if (gameState === 'playing') {
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const x = (touch.clientX - rect.left) * scaleX;
+                const y = (touch.clientY - rect.top) * scaleY;
+
+                if (energy >= 5) {
+                    placeSoldier(x, y);
+                } else {
+                    checkEnergyCollection(x, y);
+                }
+            } else if (gameState === 'gameover' || gameState === 'victory') {
+                gameOverScreen.classList.remove('active');
+                victoryScreen.classList.remove('active');
+                resetGame();
+                gameState = 'playing';
+            }
+        }, { passive: false });
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Start game loop
+        gameLoop();
+    </script>
+</body>
+</html>

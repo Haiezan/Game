@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>火柴人大战</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        body {
+            background: #0a0a0a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            border: 3px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1),
+                        inset 0 0 30px rgba(255, 255, 255, 0.05);
+        }
+
+        canvas {
+            display: block;
+            background: #1a1a2e;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .info-display {
+            color: #fff;
+            font-size: 12px;
+            text-shadow: 0 0 10px #fff;
+        }
+
+        .energy-display {
+            color: #00ffff;
+            font-size: 12px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .weapon-display {
+            color: #ff6600;
+            font-size: 12px;
+            text-shadow: 0 0 10px #ff6600;
+        }
+
+        .player-hp-container {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .player-hp-bar {
+            width: 120px;
+            height: 12px;
+            background: #220000;
+            border: 2px solid #ff3333;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .player-hp-fill {
+            height: 100%;
+            background: #ff3333;
+            box-shadow: 0 0 8px #ff3333;
+            transition: width 0.2s;
+        }
+
+        .hp-label {
+            color: #ff3333;
+            font-size: 10px;
+        }
+
+        .boss-hp-container {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            display: none;
+        }
+
+        .boss-hp-container.active {
+            display: block;
+        }
+
+        .boss-name {
+            color: #ff0000;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px #ff0000;
+        }
+
+        .boss-hp-bar {
+            width: 100%;
+            height: 16px;
+            background: #330000;
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .boss-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff4444);
+            box-shadow: 0 0 10px #ff0000;
+            transition: width 0.2s;
+        }
+
+        .minions-info {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+
+        .minion-count {
+            color: #ffd700;
+            font-size: 10px;
+            text-shadow: 0 0 8px #daa520;
+        }
+
+        .giant-count {
+            color: #ff00ff;
+            font-size: 10px;
+            text-shadow: 0 0 8px #ff00ff;
+        }
+
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 20, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .start-screen.hidden {
+            display: none;
+        }
+
+        .game-title {
+            color: #fff;
+            font-size: 28px;
+            text-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff;
+            text-align: center;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff; }
+            to { text-shadow: 0 0 60px #00ffff, 0 0 90px #ff00ff; }
+        }
+
+        .game-subtitle {
+            color: #00ffff;
+            font-size: 12px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .controls-hint {
+            color: #888;
+            font-size: 10px;
+            text-align: center;
+            line-height: 2;
+        }
+
+        .start-hint {
+            color: #ffd700;
+            font-size: 14px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 20, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .game-over-screen.active {
+            display: flex;
+        }
+
+        .game-over-title {
+            color: #ff4444;
+            font-size: 32px;
+            text-shadow: 0 0 20px #ff0000;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        .final-score {
+            color: #ffd700;
+            font-size: 14px;
+        }
+
+        .restart-hint {
+            color: #888;
+            font-size: 10px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        .victory-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 20, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .victory-screen.active {
+            display: flex;
+        }
+
+        .victory-title {
+            color: #ffd700;
+            font-size: 32px;
+            text-shadow: 0 0 30px #ffd700;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        .upgrade-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            color: #00ffff;
+            font-size: 12px;
+            display: none;
+            pointer-events: none;
+        }
+
+        .upgrade-hint.active {
+            display: block;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .game-title { font-size: 18px; }
+            .game-subtitle { font-size: 10px; }
+            .controls-hint { font-size: 8px; }
+            .start-hint { font-size: 10px; }
+            .energy-display, .weapon-display, .info-display { font-size: 10px; }
+            .hp-label { font-size: 8px; }
+            .minion-count, .giant-count { font-size: 8px; }
+            .boss-name { font-size: 10px; }
+            .game-over-title { font-size: 20px; }
+            .victory-title { font-size: 20px; }
+            .final-score { font-size: 10px; }
+            .restart-hint { font-size: 8px; }
+            .player-hp-bar { width: 80px; height: 10px; }
+            .boss-hp-bar { height: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+            <div class="ui-overlay">
+                <div class="energy-display">能量: <span id="energyCount">0</span></div>
+                <div class="weapon-display">武器: <span id="weaponName">无</span></div>
+                <div class="info-display">分数: <span id="score">0</span></div>
+            </div>
+
+            <div class="player-hp-container">
+                <span class="hp-label">HP</span>
+                <div class="player-hp-bar">
+                    <div class="player-hp-fill" id="playerHpFill" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="minions-info">
+                <div class="minion-count">小兵: <span id="minionCount">1</span></div>
+                <div class="giant-count">巨人: <span id="giantCount">0</span></div>
+            </div>
+
+            <div class="boss-hp-container" id="bossHpContainer">
+                <div class="boss-name">BOSS - 黑暗天王</div>
+                <div class="boss-hp-bar">
+                    <div class="boss-hp-fill" id="bossHpFill" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="start-screen" id="startScreen">
+                <div class="game-title">火柴人大战</div>
+                <div class="game-subtitle">收集能量 · 召唤巨人 · 击败Boss</div>
+                <div class="controls-hint">
+                    方向键/WASD 移动<br>
+                    空格键/点击 攻击<br>
+                    收集能量方块 · 收集材料包<br>
+                    打死敌人获得队友<br>
+                    60秒后Boss出现！
+                </div>
+                <div class="start-hint">点击或按空格开始</div>
+            </div>
+
+            <div class="game-over-screen" id="gameOverScreen">
+                <div class="game-over-title">战斗失败</div>
+                <div class="final-score">坚持时间: <span id="finalTime">0</span>秒</div>
+                <div class="final-score">击杀敌人: <span id="finalScore">0</span></div>
+                <div class="restart-hint">点击或按空格重新开始</div>
+            </div>
+
+            <div class="victory-screen" id="victoryScreen">
+                <div class="victory-title">胜利!</div>
+                <div class="final-score">坚持时间: <span id="victoryTime">0</span>秒</div>
+                <div class="final-score">击杀敌人: <span id="victoryScore">0</span></div>
+                <div class="restart-hint">点击或按空格重新开始</div>
+            </div>
+
+            <div class="upgrade-hint" id="upgradeHint">按E键升级选中单位</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const energyCountEl = document.getElementById('energyCount');
+        const weaponNameEl = document.getElementById('weaponName');
+        const scoreEl = document.getElementById('score');
+        const playerHpFill = document.getElementById('playerHpFill');
+        const minionCountEl = document.getElementById('minionCount');
+        const giantCountEl = document.getElementById('giantCount');
+        const bossHpContainer = document.getElementById('bossHpContainer');
+        const bossHpFill = document.getElementById('bossHpFill');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const victoryScreen = document.getElementById('victoryScreen');
+        const finalTimeEl = document.getElementById('finalTime');
+        const finalScoreEl = document.getElementById('finalScore');
+        const victoryTimeEl = document.getElementById('victoryTime');
+        const victoryScoreEl = document.getElementById('victoryScore');
+        const upgradeHint = document.getElementById('upgradeHint');
+
+        // Game state
+        let gameState = 'start';
+        let score = 0;
+        let energy = 0;
+        let gameTime = 0;
+        let frameCount = 0;
+        let playerHp = 100;
+        let maxPlayerHp = 100;
+        let bossSpawned = false;
+        let bossDefeated = false;
+        let isGiant = false;
+
+        // Weapons: none, sword, axe, spear, bow, hammer
+        let currentWeapon = 'none';
+        const weapons = {
+            none: { name: '无', damage: 10, range: 30, speed: 20, color: '#ffffff' },
+            sword: { name: '剑', damage: 25, range: 50, speed: 15, color: '#c0c0c0' },
+            axe: { name: '斧', damage: 40, range: 45, speed: 25, color: '#8b4513' },
+            spear: { name: '枪', damage: 20, range: 80, speed: 12, color: '#ffd700' },
+            bow: { name: '弓', damage: 15, range: 200, speed: 30, color: '#9932cc' },
+            hammer: { name: '锤', damage: 60, range: 40, speed: 40, color: '#696969' }
+        };
+
+        // Game objects
+        let player = null;
+        let minions = [];
+        let giants = [];
+        let enemies = [];
+        let projectiles = [];
+        let particles = [];
+        let energyBlocks = [];
+        let materialPacks = [];
+        let boss = null;
+
+        // Input
+        const keys = {};
+        let mouseX = 0;
+        let mouseY = 0;
+
+        // Audio
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'collect') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(660, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'attack') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } else if (type === 'hit') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'enemy') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'boss') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
+                osc.frequency.setValueAtTime(60, audioCtx.currentTime + 0.3);
+                osc.frequency.setValueAtTime(140, audioCtx.currentTime + 0.45);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.6);
+            } else if (type === 'upgrade') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'transform') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            }
+        }
+
+        // Draw background
+        function drawBackground() {
+            // Dark space background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Stars
+            for (let i = 0; i < 100; i++) {
+                const x = (i * 73 + frameCount * 0.2) % canvas.width;
+                const y = (i * 47) % canvas.height;
+                const size = (i % 3) + 1;
+                const alpha = 0.3 + Math.sin(frameCount * 0.05 + i) * 0.3;
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Ground
+            ctx.fillStyle = '#0f0f1a';
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+
+            // Ground line
+            ctx.strokeStyle = '#333355';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - 50);
+            ctx.lineTo(canvas.width, canvas.height - 50);
+            ctx.stroke();
+        }
+
+        // Draw stick figure
+        function drawStickFigure(x, y, color, scale = 1, isGiant = false, isPlayer = false, weaponType = 'none') {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+
+            const bodyColor = color;
+            ctx.strokeStyle = bodyColor;
+            ctx.lineWidth = isGiant ? 4 : 2;
+            ctx.lineCap = 'round';
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(0, isGiant ? 35 : 20, isGiant ? 20 : 10, isGiant ? 8 : 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Legs
+            ctx.beginPath();
+            ctx.moveTo(-5, 10);
+            ctx.lineTo(-10, 30);
+            ctx.moveTo(5, 10);
+            ctx.lineTo(10, 30);
+            ctx.stroke();
+
+            // Body
+            ctx.beginPath();
+            ctx.moveTo(0, 10);
+            ctx.lineTo(0, -15);
+            ctx.stroke();
+
+            // Arms
+            const armAngle = Math.sin(frameCount * 0.1) * 0.2;
+            ctx.beginPath();
+            ctx.moveTo(-8, -5);
+            ctx.lineTo(-15 + Math.sin(armAngle) * 5, 10);
+            ctx.moveTo(8, -5);
+            ctx.lineTo(15 + Math.sin(-armAngle) * 5, 10);
+            ctx.stroke();
+
+            // Head
+            ctx.fillStyle = bodyColor;
+            ctx.beginPath();
+            ctx.arc(0, -22, isGiant ? 10 : 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyes (if player)
+            if (isPlayer) {
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(-2, -24, 1.5, 0, Math.PI * 2);
+                ctx.arc(2, -24, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Weapon
+            if (weaponType !== 'none') {
+                const weapon = weapons[weaponType];
+                ctx.strokeStyle = weapon.color;
+                ctx.lineWidth = isGiant ? 4 : 2;
+
+                const attackAnim = Math.sin(frameCount * 0.2) * 0.3;
+                const handX = 18 + attackAnim * 5;
+                const handY = 5;
+
+                if (weaponType === 'sword') {
+                    ctx.beginPath();
+                    ctx.moveTo(handX, handY);
+                    ctx.lineTo(handX + 25, handY - 5);
+                    ctx.stroke();
+                } else if (weaponType === 'axe') {
+                    ctx.beginPath();
+                    ctx.moveTo(handX, handY - 10);
+                    ctx.lineTo(handX + 20, handY);
+                    ctx.lineTo(handX + 10, handY + 5);
+                    ctx.lineTo(handX + 25, handY + 10);
+                    ctx.lineTo(handX + 15, handY + 15);
+                    ctx.lineTo(handX + 20, handY + 25);
+                    ctx.lineTo(handX, handY);
+                    ctx.stroke();
+                } else if (weaponType === 'spear') {
+                    ctx.beginPath();
+                    ctx.moveTo(handX, handY + 15);
+                    ctx.lineTo(handX + 35, handY - 10);
+                    ctx.stroke();
+                } else if (weaponType === 'bow') {
+                    ctx.strokeStyle = '#8b4513';
+                    ctx.beginPath();
+                    ctx.arc(handX + 10, handY, 20, -Math.PI/2, Math.PI/2);
+                    ctx.stroke();
+                } else if (weaponType === 'hammer') {
+                    ctx.beginPath();
+                    ctx.moveTo(handX, handY);
+                    ctx.lineTo(handX + 15, handY - 15);
+                    ctx.stroke();
+                    ctx.fillStyle = '#696969';
+                    ctx.fillRect(handX + 10, handY - 25, 15, 15);
+                }
+            }
+
+            // Giant aura
+            if (isGiant) {
+                ctx.strokeStyle = 'rgba(255, 0, 255, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, isGiant ? 45 : 25, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // Draw player
+        function drawPlayer() {
+            if (!player) return;
+            drawStickFigure(player.x, player.y, player.color, player.scale, player.isGiant, true, player.weapon);
+        }
+
+        // Draw minions
+        function drawMinions() {
+            minions.forEach(minion => {
+                drawStickFigure(minion.x, minion.y, minion.color, minion.scale, false, false, minion.weapon);
+            });
+        }
+
+        // Draw giants
+        function drawGiants() {
+            giants.forEach(giant => {
+                drawStickFigure(giant.x, giant.y, giant.color, giant.scale, true, false, giant.weapon);
+            });
+        }
+
+        // Draw enemies
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.save();
+                ctx.translate(enemy.x, enemy.y);
+
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(0, 25, 15, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Body
+                ctx.fillStyle = enemy.color;
+                ctx.strokeStyle = enemy.color;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+
+                // Legs (moving)
+                const legAnim = Math.sin(frameCount * 0.2) * 5;
+                ctx.beginPath();
+                ctx.moveTo(-5, 10);
+                ctx.lineTo(-8 - legAnim, 28);
+                ctx.moveTo(5, 10);
+                ctx.lineTo(8 + legAnim, 28);
+                ctx.stroke();
+
+                // Body line
+                ctx.beginPath();
+                ctx.moveTo(0, 10);
+                ctx.lineTo(0, -12);
+                ctx.stroke();
+
+                // Arms
+                ctx.beginPath();
+                ctx.moveTo(-8, -5);
+                ctx.lineTo(-15, 8);
+                ctx.moveTo(8, -5);
+                ctx.lineTo(15, 8);
+                ctx.stroke();
+
+                // Head
+                ctx.fillStyle = enemy.color;
+                ctx.beginPath();
+                ctx.arc(0, -18, 7, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Evil eyes
+                ctx.fillStyle = '#ff0000';
+                ctx.shadowColor = '#ff0000';
+                ctx.shadowBlur = 5;
+                ctx.beginPath();
+                ctx.arc(-3, -19, 2, 0, Math.PI * 2);
+                ctx.arc(3, -19, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.restore();
+            });
+        }
+
+        // Draw boss
+        function drawBoss() {
+            if (!boss) return;
+
+            const b = boss;
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(b.x, b.y + 50, 40, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body
+            ctx.fillStyle = b.color;
+            ctx.strokeStyle = b.color;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+
+            // Giant legs
+            const legAnim = Math.sin(frameCount * 0.15) * 8;
+            ctx.beginPath();
+            ctx.moveTo(-15, 20);
+            ctx.lineTo(-25 - legAnim, 50);
+            ctx.moveTo(15, 20);
+            ctx.lineTo(25 + legAnim, 50);
+            ctx.stroke();
+
+            // Body
+            ctx.beginPath();
+            ctx.moveTo(0, 20);
+            ctx.lineTo(0, -35);
+            ctx.stroke();
+
+            // Arms
+            const armAnim = Math.sin(frameCount * 0.1) * 0.4;
+            ctx.beginPath();
+            ctx.moveTo(-20, -10);
+            ctx.lineTo(-40 + Math.sin(armAnim) * 10, 20);
+            ctx.moveTo(20, -10);
+            ctx.lineTo(40 + Math.sin(-armAnim) * 10, 20);
+            ctx.stroke();
+
+            // Head
+            ctx.fillStyle = b.color;
+            ctx.beginPath();
+            ctx.arc(0, -45, 18, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Crown
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.moveTo(-15, -55);
+            ctx.lineTo(-10, -70);
+            ctx.lineTo(-5, -58);
+            ctx.lineTo(0, -72);
+            ctx.lineTo(5, -58);
+            ctx.lineTo(10, -70);
+            ctx.lineTo(15, -55);
+            ctx.closePath();
+            ctx.fill();
+
+            // Evil eyes
+            ctx.fillStyle = '#ffff00';
+            ctx.shadowColor = '#ffff00';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(-6, -45, 4, 0, Math.PI * 2);
+            ctx.arc(6, -45, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Weapon (giant axe)
+            ctx.strokeStyle = '#8b4513';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(40, 0);
+            ctx.lineTo(60, -30);
+            ctx.stroke();
+            ctx.fillStyle = '#696969';
+            ctx.beginPath();
+            ctx.moveTo(55, -35);
+            ctx.lineTo(75, -45);
+            ctx.lineTo(65, -25);
+            ctx.lineTo(80, -30);
+            ctx.lineTo(60, -15);
+            ctx.closePath();
+            ctx.fill();
+
+            // Angry phase effect - red aura
+            if (b.isAngry) {
+                ctx.strokeStyle = `rgba(255, 0, 0, ${0.3 + Math.sin(frameCount * 0.2) * 0.2})`;
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.arc(0, 0, 70, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Flames
+                ctx.fillStyle = `rgba(255, ${Math.floor(100 + Math.random() * 100)}, 0, ${0.5 + Math.random() * 0.3})`;
+                for (let i = 0; i < 5; i++) {
+                    const flameX = b.x + (Math.random() - 0.5) * 60;
+                    const flameY = b.y - 30 + Math.random() * 20;
+                    ctx.beginPath();
+                    ctx.arc(flameX, flameY, 5 + Math.random() * 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Boss shield effect
+            ctx.strokeStyle = `rgba(100, 0, 200, ${0.2 + Math.sin(frameCount * 0.1) * 0.1})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, 55, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Draw projectiles
+        function drawProjectiles() {
+            projectiles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 15;
+
+                // Different projectile shapes based on weapon type
+                if (p.weaponType === 'sword') {
+                    // Sword slash - elongated diamond
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(Math.atan2(p.vy, p.vx));
+                    ctx.beginPath();
+                    ctx.moveTo(-p.size * 2, 0);
+                    ctx.lineTo(0, -p.size);
+                    ctx.lineTo(p.size * 2, 0);
+                    ctx.lineTo(0, p.size);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                } else if (p.weaponType === 'axe') {
+                    // Axe - spinning shape
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(frameCount * 0.3);
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillRect(-p.size * 2, -3, p.size * 2, 6);
+                    ctx.restore();
+                } else if (p.weaponType === 'spear') {
+                    // Spear - long thin shape
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(Math.atan2(p.vy, p.vx));
+                    ctx.fillRect(-p.size * 3, -2, p.size * 4, 4);
+                    ctx.beginPath();
+                    ctx.moveTo(p.size, -4);
+                    ctx.lineTo(p.size * 2, 0);
+                    ctx.lineTo(p.size, 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                } else if (p.weaponType === 'bow') {
+                    // Arrow - with trail effect
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Trail
+                    ctx.globalAlpha = 0.3;
+                    ctx.beginPath();
+                    ctx.arc(p.x + p.vx * 2, p.y + p.vy * 2, p.size * 0.7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                } else if (p.weaponType === 'hammer') {
+                    // Hammer - heavy impact
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#888';
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Default - bullet/energy ball
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Draw particles
+        function drawParticles() {
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                p.vy += 0.1;
+
+                const alpha = p.life / p.maxLife;
+                ctx.fillStyle = `rgba(${p.color}, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            particles = particles.filter(p => p.life > 0);
+        }
+
+        // Draw energy blocks
+        function drawEnergyBlocks() {
+            energyBlocks.forEach(block => {
+                const glow = Math.sin(frameCount * 0.15 + block.x) * 0.3 + 0.7;
+
+                ctx.fillStyle = `rgba(0, 255, 255, ${glow * 0.3})`;
+                ctx.fillRect(block.x - 18, block.y - 18, 36, 36);
+
+                ctx.fillStyle = `rgba(0, 255, 255, ${glow})`;
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 15;
+                ctx.fillRect(block.x - 10, block.y - 10, 20, 20);
+
+                ctx.fillStyle = `rgba(150, 255, 255, ${glow})`;
+                ctx.fillRect(block.x - 6, block.y - 6, 12, 12);
+
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Draw material packs
+        function drawMaterialPacks() {
+            materialPacks.forEach(pack => {
+                const glow = Math.sin(frameCount * 0.1 + pack.x) * 0.3 + 0.7;
+
+                // Glow
+                ctx.fillStyle = `rgba(255, 165, 0, ${glow * 0.3})`;
+                ctx.fillRect(pack.x - 18, pack.y - 18, 36, 36);
+
+                // Pack body
+                ctx.fillStyle = `rgba(255, 165, 0, ${glow})`;
+                ctx.shadowColor = '#ffa500';
+                ctx.shadowBlur = 10;
+                ctx.fillRect(pack.x - 12, pack.y - 10, 24, 20);
+
+                // Question mark
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText('?', pack.x, pack.y + 4);
+
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Spawn functions
+        function spawnExplosion(x, y, color, count = 15) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    size: Math.random() * 4 + 2,
+                    life: 25,
+                    maxLife: 25,
+                    color: color
+                });
+            }
+        }
+
+        function spawnEnergyBlock() {
+            energyBlocks.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: -20,
+                size: 20,
+                speed: 2 + Math.random()
+            });
+        }
+
+        function spawnMaterialPack() {
+            materialPacks.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: -20,
+                size: 24,
+                speed: 2 + Math.random()
+            });
+        }
+
+        function spawnEnemy() {
+            const types = ['skeleton', 'orc', 'demon'];
+            const type = types[Math.floor(Math.random() * types.length)];
+
+            let hp = 1, speed = 2, size = 1, damage = 10, color = '#ffffff';
+
+            if (type === 'orc') {
+                hp = 2; speed = 1.5; damage = 15; color = '#228b22';
+            } else if (type === 'demon') {
+                hp = 3; speed = 1; damage = 25; color = '#8b0000';
+            }
+
+            enemies.push({
+                x: canvas.width + 30,
+                y: Math.random() * (canvas.height - 100) + 30,
+                hp: hp,
+                maxHp: hp,
+                speed: speed + (score / 5000),
+                damage: damage,
+                type: type,
+                color: color,
+                lastAttack: frameCount
+            });
+        }
+
+        function spawnBoss() {
+            boss = {
+                x: canvas.width + 100,
+                y: canvas.height / 2,
+                hp: 3000,
+                maxHp: 3000,
+                speed: 1.2,
+                damage: 50,
+                color: '#4a0080',
+                lastAttack: frameCount,
+                attackCooldown: 0,
+                phase: 1,
+                isAngry: false,
+                shootPattern: 0
+            };
+            bossHpContainer.classList.add('active');
+            playSound('boss');
+            spawnExplosion(canvas.width - 50, canvas.height / 2, '255, 0, 255', 50);
+        }
+
+        // Boss attacks
+        function bossAttack() {
+            if (!boss) return;
+
+            const attackType = Math.floor(Math.random() * 3);
+
+            if (attackType === 0) {
+                // Shoot 3 projectiles in spread
+                for (let i = -1; i <= 1; i++) {
+                    projectiles.push({
+                        x: boss.x - 40,
+                        y: boss.y,
+                        vx: -10,
+                        vy: i * 4,
+                        damage: 30,
+                        size: 8,
+                        color: '#ff0000',
+                        isPlayer: false,
+                        weaponType: 'none'
+                    });
+                }
+            } else if (attackType === 1) {
+                // Shoot circle of projectiles
+                for (let i = 0; i < 8; i++) {
+                    const angle = (Math.PI / 4) * i;
+                    projectiles.push({
+                        x: boss.x - 30,
+                        y: boss.y,
+                        vx: Math.cos(angle) * -8,
+                        vy: Math.sin(angle) * 8,
+                        damage: 25,
+                        size: 6,
+                        color: '#ff6600',
+                        isPlayer: false,
+                        weaponType: 'none'
+                    });
+                }
+            } else {
+                // Laser beam attack (multiple projectiles in a line)
+                for (let i = -2; i <= 2; i++) {
+                    projectiles.push({
+                        x: boss.x - 30,
+                        y: boss.y + i * 15,
+                        vx: -12,
+                        vy: i * 0.5,
+                        damage: 35,
+                        size: 10,
+                        color: '#ff00ff',
+                        isPlayer: false,
+                        weaponType: 'none'
+                    });
+                }
+            }
+
+            playSound('attack');
+        }
+
+        function spawnMinion(x, y) {
+            const weaponsList = ['none', 'sword', 'spear', 'bow'];
+            const weapon = weaponsList[Math.floor(Math.random() * weaponsList.length)];
+
+            minions.push({
+                x: x,
+                y: y,
+                hp: 30,
+                maxHp: 30,
+                damage: weapons[weapon].damage,
+                range: weapons[weapon].range,
+                speed: 2,
+                color: '#00ff00',
+                scale: 0.8,
+                weapon: weapon,
+                lastAttack: frameCount,
+                lifetime: 1800
+            });
+            playSound('spawn');
+        }
+
+        function spawnGiant(x, y, weapon) {
+            giants.push({
+                x: x,
+                y: y,
+                hp: 100,
+                maxHp: 100,
+                damage: weapons[weapon].damage * 2,
+                range: weapons[weapon].range * 1.5,
+                speed: 1.5,
+                color: '#ff00ff',
+                scale: 1.5,
+                weapon: weapon,
+                lastAttack: frameCount,
+                lifetime: 2400
+            });
+            playSound('transform');
+            spawnExplosion(x, y, '255, 0, 255', 25);
+        }
+
+        // Update functions
+        function updateEnergyBlocks() {
+            energyBlocks.forEach(block => {
+                block.y += block.speed;
+            });
+            energyBlocks = energyBlocks.filter(block => block.y < canvas.height + 30);
+        }
+
+        function updateMaterialPacks() {
+            materialPacks.forEach(pack => {
+                pack.y += pack.speed;
+            });
+            materialPacks = materialPacks.filter(pack => pack.y < canvas.height + 30);
+        }
+
+        function updatePlayer() {
+            if (!player) return;
+
+            const speed = isGiant ? 3 : 5;
+
+            if (keys['ArrowLeft'] || keys['KeyA']) player.x -= speed;
+            if (keys['ArrowRight'] || keys['KeyD']) player.x += speed;
+            if (keys['ArrowUp'] || keys['KeyW']) player.y -= speed;
+            if (keys['ArrowDown'] || keys['KeyS']) player.y += speed;
+
+            // Bound to canvas
+            player.x = Math.max(30, Math.min(canvas.width - 30, player.x));
+            player.y = Math.max(30, Math.min(canvas.height - 80, player.y));
+
+            // Auto attack towards mouse position
+            if (keys['Space'] && frameCount - player.lastAttack > weapons[player.weapon].speed) {
+                player.lastAttack = frameCount;
+                // Convert mouse position to canvas coordinates
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const canvasMouseX = mouseX * scaleX;
+                const canvasMouseY = mouseY * scaleY;
+                attackWithWeapon(player.x, player.y, player.weapon, player.isGiant, true, canvasMouseX, canvasMouseY);
+            }
+        }
+
+        function attackWithWeapon(x, y, weaponType, isGiant = false, isPlayer = false, targetX = null, targetY = null) {
+            const weapon = weapons[weaponType];
+            const range = isGiant ? weapon.range * 1.5 : weapon.range;
+
+            // Calculate direction to target (mouse position)
+            let dirX, dirY;
+            if (targetX !== null && targetY !== null) {
+                dirX = targetX - x;
+                dirY = targetY - y;
+            } else {
+                // Default: shoot left (towards enemies)
+                dirX = -1;
+                dirY = 0;
+            }
+
+            // Normalize direction
+            const dist = Math.sqrt(dirX * dirX + dirY * dirY);
+            if (dist > 0) {
+                dirX /= dist;
+                dirY /= dist;
+            } else {
+                dirX = -1;
+                dirY = 0;
+            }
+
+            // All weapons fire projectiles (bullets)
+            const projSpeed = isGiant ? 14 : 10;
+            const projSize = isGiant ? 8 : 5;
+            const projDamage = isGiant ? weapon.damage * 1.5 : weapon.damage;
+
+            // Create bullet/projectile in direction of mouse
+            projectiles.push({
+                x: x + dirX * (isGiant ? 35 : 25),
+                y: y + dirY * (isGiant ? 35 : 25),
+                vx: projSpeed * dirX,
+                vy: projSpeed * dirY,
+                damage: projDamage,
+                size: projSize,
+                color: weapon.color,
+                isPlayer: isPlayer,
+                weaponType: weaponType
+            });
+
+            // Also check close range hits for melee effect
+            enemies.forEach(enemy => {
+                const dx = enemy.x - x;
+                const dy = enemy.y - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < range * 0.3) {
+                    enemy.hp -= weapon.damage * 0.5;
+                    spawnExplosion(enemy.x, enemy.y, '255, 255, 0', 5);
+                    playSound('hit');
+                }
+            });
+
+            if (boss) {
+                const dx = boss.x - x;
+                const dy = boss.y - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < range * 0.3 + 30) {
+                    boss.hp -= weapon.damage * 0.5;
+                    spawnExplosion(boss.x, boss.y, '255, 255, 0', 8);
+                    playSound('hit');
+                }
+            }
+
+            playSound('attack');
+        }
+
+        function updateMinions() {
+            minions.forEach(minion => {
+                minion.lifetime--;
+
+                // Find nearest enemy
+                let target = null;
+                let minDist = minion.range;
+
+                enemies.forEach(enemy => {
+                    const dx = enemy.x - minion.x;
+                    const dy = enemy.y - minion.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        target = enemy;
+                    }
+                });
+
+                if (boss) {
+                    const dx = boss.x - minion.x;
+                    const dy = boss.y - minion.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < minRange(minion, boss)) {
+                        target = boss;
+                    }
+                }
+
+                // Move towards enemy if too far
+                if (target) {
+                    const dx = target.x - minion.x;
+                    const dy = target.y - minion.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    // Move towards enemy if out of range
+                    if (dist > minion.range * 0.8) {
+                        minion.x += (dx / dist) * minion.speed * 0.5;
+                        minion.y += (dy / dist) * minion.speed * 0.5;
+                    }
+
+                    // Attack if in range
+                    if (dist < minion.range && frameCount - minion.lastAttack > weapons[minion.weapon].speed * 2) {
+                        minion.lastAttack = frameCount;
+                        attackWithWeapon(minion.x, minion.y, minion.weapon, false, false, target.x, target.y);
+                    }
+                }
+
+                // Keep minion in bounds
+                minion.x = Math.max(30, Math.min(canvas.width - 30, minion.x));
+                minion.y = Math.max(30, Math.min(canvas.height - 80, minion.y));
+            });
+
+            minions = minions.filter(m => m.hp > 0 && m.lifetime > 0);
+        }
+
+        function updateGiants() {
+            giants.forEach(giant => {
+                giant.lifetime--;
+
+                let target = null;
+                let minDist = giant.range;
+
+                enemies.forEach(enemy => {
+                    const dx = enemy.x - giant.x;
+                    const dy = enemy.y - giant.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        target = enemy;
+                    }
+                });
+
+                if (boss) {
+                    const dx = boss.x - giant.x;
+                    const dy = boss.y - giant.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < giant.range + 80) {
+                        target = boss;
+                    }
+                }
+
+                // Move towards enemy if too far
+                if (target) {
+                    const dx = target.x - giant.x;
+                    const dy = target.y - giant.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist > giant.range * 0.8) {
+                        giant.x += (dx / dist) * giant.speed * 0.5;
+                        giant.y += (dy / dist) * giant.speed * 0.5;
+                    }
+
+                    // Attack
+                    if (dist < giant.range && frameCount - giant.lastAttack > weapons[giant.weapon].speed) {
+                        giant.lastAttack = frameCount;
+                        attackWithWeapon(giant.x, giant.y, giant.weapon, true, false, target.x, target.y);
+                    }
+                }
+
+                // Keep giant in bounds
+                giant.x = Math.max(40, Math.min(canvas.width - 40, giant.x));
+                giant.y = Math.max(40, Math.min(canvas.height - 80, giant.y));
+            });
+
+            giants = giants.filter(g => g.hp > 0 && g.lifetime > 0);
+        }
+
+        function minRange(unit, target) {
+            return unit.range + (target === boss ? 50 : 0);
+        }
+
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                enemy.x -= enemy.speed;
+
+                // Attack player
+                if (player) {
+                    const dx = player.x - enemy.x;
+                    const dy = player.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 40 && frameCount - enemy.lastAttack > 30) {
+                        playerHp -= enemy.damage;
+                        enemy.lastAttack = frameCount;
+                        spawnExplosion(player.x, player.y, '255, 0, 0', 5);
+                        playSound('hit');
+                        updatePlayerHpBar();
+                    }
+                }
+
+                // Attack minions
+                minions.forEach(minion => {
+                    const dx = minion.x - enemy.x;
+                    const dy = minion.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 30 && frameCount - enemy.lastAttack > 45) {
+                        minion.hp -= enemy.damage;
+                        enemy.lastAttack = frameCount;
+                        spawnExplosion(minion.x, minion.y, '255, 0, 0', 5);
+                        playSound('hit');
+                    }
+                });
+
+                // Attack giants
+                giants.forEach(giant => {
+                    const dx = giant.x - enemy.x;
+                    const dy = giant.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 50 && frameCount - enemy.lastAttack > 60) {
+                        giant.hp -= enemy.damage;
+                        enemy.lastAttack = frameCount;
+                        spawnExplosion(giant.x, giant.y, '255, 0, 0', 8);
+                        playSound('hit');
+                    }
+                });
+            });
+
+            enemies = enemies.filter(enemy => {
+                if (enemy.hp <= 0) {
+                    score += 10;
+
+                    // 击杀敌人获得一个队友
+                    spawnMinion(enemy.x, enemy.y);
+
+                    spawnExplosion(enemy.x, enemy.y, enemy.color === '#228b22' ? '34, 139, 34' : '139, 0, 0', 15);
+                    playSound('enemy');
+                    return false;
+                }
+                if (enemy.x < -20) {
+                    playerHp -= enemy.damage;
+                    updatePlayerHpBar();
+                    spawnExplosion(0, enemy.y, '255, 0, 0', 10);
+                    playSound('hit');
+                    return false;
+                }
+                return true;
+            });
+
+            if (playerHp <= 0) {
+                gameOver();
+            }
+        }
+
+        function updateBoss() {
+            if (!boss) return;
+
+            // Move boss (slower and more menacing)
+            if (boss.x > canvas.width - 150) {
+                boss.x -= boss.speed * 0.5;
+            }
+
+            // Boss moves up and down
+            boss.y += Math.sin(frameCount * 0.03) * 1.5;
+            boss.y = Math.max(100, Math.min(canvas.height - 100, boss.y));
+
+            // Boss attacks periodically
+            if (frameCount - boss.lastAttack > (boss.isAngry ? 40 : 60)) {
+                boss.lastAttack = frameCount;
+                bossAttack();
+            }
+
+            // Angry phase at 30% HP
+            if (boss.hp < boss.maxHp * 0.3 && !boss.isAngry) {
+                boss.isAngry = true;
+                boss.damage = 80;
+                boss.speed = 2;
+                spawnExplosion(boss.x, boss.y, '255, 0, 0', 30);
+            }
+
+            // Contact damage to player
+            if (player) {
+                const dx = player.x - boss.x;
+                const dy = player.y - boss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 60) {
+                    playerHp -= boss.isAngry ? 2 : 1;
+                    if (frameCount % 10 === 0) {
+                        spawnExplosion(player.x, player.y, '255, 0, 0', 5);
+                        playSound('hit');
+                        updatePlayerHpBar();
+                    }
+                }
+            }
+
+            // Attack minions
+            minions.forEach(minion => {
+                const dx = minion.x - boss.x;
+                const dy = minion.y - boss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 50 && frameCount - boss.lastAttack > 30) {
+                    minion.hp -= boss.isAngry ? 30 : 15;
+                    boss.lastAttack = frameCount;
+                    spawnExplosion(minion.x, minion.y, '255, 0, 0', 10);
+                    playSound('hit');
+                }
+            });
+
+            // Attack giants
+            giants.forEach(giant => {
+                const dx = giant.x - boss.x;
+                const dy = giant.y - boss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 60 && frameCount - boss.lastAttack > 40) {
+                    giant.hp -= boss.isAngry ? 20 : 10;
+                    boss.lastAttack = frameCount;
+                    spawnExplosion(giant.x, giant.y, '255, 0, 0', 8);
+                    playSound('hit');
+                }
+            });
+
+            // Update HP bar
+            const hpPercent = (boss.hp / boss.maxHp) * 100;
+            bossHpFill.style.width = hpPercent + '%';
+
+            // Boss death
+            if (boss.hp <= 0) {
+                bossDefeated = true;
+                score += 5000;
+                // Big explosion effect
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        spawnExplosion(
+                            boss.x + (Math.random() - 0.5) * 100,
+                            boss.y + (Math.random() - 0.5) * 100,
+                            ['255, 0, 255', '255, 215, 0', '255, 0, 0'][Math.floor(Math.random() * 3)],
+                            30
+                        );
+                    }, i * 200);
+                }
+                playSound('boss');
+                boss = null;
+                bossHpContainer.classList.remove('active');
+                victory();
+            }
+        }
+
+        function updateProjectiles() {
+            projectiles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Hit check
+                if (p.isPlayer) {
+                    enemies.forEach(enemy => {
+                        const dx = enemy.x - p.x;
+                        const dy = enemy.y - p.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 20) {
+                            enemy.hp -= p.damage;
+                            p.hit = true;
+                            spawnExplosion(p.x, p.y, '255, 255, 0', 5);
+                            playSound('hit');
+                        }
+                    });
+
+                    if (boss) {
+                        const dx = boss.x - p.x;
+                        const dy = boss.y - p.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 40) {
+                            boss.hp -= p.damage;
+                            p.hit = true;
+                            spawnExplosion(p.x, p.y, '255, 255, 0', 8);
+                            playSound('hit');
+                        }
+                    }
+                } else {
+                    // Boss projectiles hit player
+                    if (player && !p.hit) {
+                        const dx = player.x - p.x;
+                        const dy = player.y - p.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 25) {
+                            playerHp -= p.damage;
+                            p.hit = true;
+                            spawnExplosion(p.x, p.y, '255, 0, 0', 8);
+                            playSound('hit');
+                            updatePlayerHpBar();
+                        }
+                    }
+                }
+            });
+
+            projectiles = projectiles.filter(p => !p.hit && p.x > 0 && p.x < canvas.width && p.y > 0 && p.y < canvas.height);
+        }
+
+        function checkCollisions() {
+            if (!player) return;
+
+            // Collect energy
+            energyBlocks = energyBlocks.filter(block => {
+                const dx = player.x - block.x;
+                const dy = player.y - block.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 40) {
+                    energy += 1;
+                    spawnExplosion(block.x, block.y, '0, 255, 255', 10);
+                    playSound('collect');
+                    energyCountEl.textContent = energy;
+                    return false;
+                }
+                return true;
+            });
+
+            // Collect material packs
+            materialPacks = materialPacks.filter(pack => {
+                const dx = player.x - pack.x;
+                const dy = player.y - pack.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 40) {
+                    const weaponsList = Object.keys(weapons);
+                    weaponsList.splice(0, 1); // Remove 'none'
+                    const newWeapon = weaponsList[Math.floor(Math.random() * weaponsList.length)];
+                    currentWeapon = newWeapon;
+                    weaponNameEl.textContent = weapons[newWeapon].name;
+                    spawnExplosion(pack.x, pack.y, '255, 165, 0', 15);
+                    playSound('collect');
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function updatePlayerHpBar() {
+            const hpPercent = (playerHp / maxPlayerHp) * 100;
+            playerHpFill.style.width = hpPercent + '%';
+
+            if (hpPercent > 60) {
+                playerHpFill.style.background = '#ff3333';
+            } else if (hpPercent > 30) {
+                playerHpFill.style.background = '#ffaa00';
+            } else {
+                playerHpFill.style.background = '#ff0000';
+            }
+        }
+
+        function gameOver() {
+            gameState = 'gameover';
+            finalTimeEl.textContent = gameTime;
+            finalScoreEl.textContent = score;
+            gameOverScreen.classList.add('active');
+        }
+
+        function victory() {
+            gameState = 'victory';
+            victoryTimeEl.textContent = gameTime;
+            victoryScoreEl.textContent = score;
+            victoryScreen.classList.add('active');
+        }
+
+        function resetGame() {
+            score = 0;
+            energy = 0;
+            gameTime = 0;
+            frameCount = 0;
+            playerHp = 100;
+            bossSpawned = false;
+            bossDefeated = false;
+            isGiant = false;
+            currentWeapon = 'none';
+
+            player = {
+                x: 100,
+                y: canvas.height - 100,
+                color: '#ffffff',
+                scale: 1,
+                weapon: 'none',
+                isGiant: false,
+                lastAttack: 0
+            };
+
+            minions = [];
+            giants = [];
+            enemies = [];
+            projectiles = [];
+            particles = [];
+            energyBlocks = [];
+            materialPacks = [];
+            boss = null;
+
+            // Spawn initial minion
+            spawnMinion(150, canvas.height - 100);
+
+            energyCountEl.textContent = '0';
+            weaponNameEl.textContent = '无';
+            scoreEl.textContent = '0';
+            minionCountEl.textContent = '1';
+            giantCountEl.textContent = '0';
+
+            bossHpContainer.classList.remove('active');
+            bossHpFill.style.width = '100%';
+            updatePlayerHpBar();
+        }
+
+        // Main game loop
+        function gameLoop() {
+            drawBackground();
+
+            if (gameState === 'playing') {
+                frameCount++;
+
+                if (frameCount % 60 === 0) {
+                    gameTime++;
+                    score += 1;
+                    scoreEl.textContent = score;
+                }
+
+                // Spawn energy
+                if (frameCount % 90 === 0) {
+                    spawnEnergyBlock();
+                }
+
+                // Spawn material packs
+                if (frameCount % 200 === 0) {
+                    spawnMaterialPack();
+                }
+
+                // Spawn enemies
+                const spawnRate = Math.max(60, 150 - gameTime);
+                if (frameCount % Math.floor(spawnRate) === 0) {
+                    spawnEnemy();
+                }
+
+                // Spawn boss at 60 seconds
+                if (gameTime >= 60 && !bossSpawned && !bossDefeated) {
+                    spawnBoss();
+                    bossSpawned = true;
+                }
+
+                // Update
+                updatePlayer();
+                updateEnergyBlocks();
+                updateMaterialPacks();
+                updateMinions();
+                updateGiants();
+                updateEnemies();
+                updateProjectiles();
+                updateBoss();
+                checkCollisions();
+
+                // Update UI
+                minionCountEl.textContent = minions.length;
+                giantCountEl.textContent = giants.length;
+
+                // Draw
+                drawEnergyBlocks();
+                drawMaterialPacks();
+                drawProjectiles();
+                drawEnemies();
+                drawBoss();
+                drawMinions();
+                drawGiants();
+                drawPlayer();
+                drawParticles();
+
+            } else if (gameState === 'gameover' || gameState === 'victory') {
+                drawEnergyBlocks();
+                drawMaterialPacks();
+                drawEnemies();
+                drawBoss();
+                drawMinions();
+                drawGiants();
+                drawPlayer();
+                drawParticles();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+
+                if (gameState === 'start') {
+                    initAudio();
+                    gameState = 'playing';
+                    startScreen.classList.add('hidden');
+                    resetGame();
+                } else if (gameState === 'gameover' || gameState === 'victory') {
+                    gameOverScreen.classList.remove('active');
+                    victoryScreen.classList.remove('active');
+                    resetGame();
+                    gameState = 'playing';
+                }
+            }
+
+            // Transform to giant
+            if (e.code === 'KeyG' && gameState === 'playing' && energy >= 100 && !isGiant) {
+                energy -= 100;
+                isGiant = true;
+                player.isGiant = true;
+                player.scale = 1.5;
+                player.hp = 200;
+                maxPlayerHp = 200;
+                playerHp = 200;
+                energyCountEl.textContent = energy;
+                updatePlayerHpBar();
+                playSound('transform');
+                spawnExplosion(player.x, player.y, '255, 0, 255', 30);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        // Mouse position tracking
+        document.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+
+        document.querySelector('.game-container').addEventListener('click', (e) => {
+            if (gameState === 'start') {
+                initAudio();
+                gameState = 'playing';
+                startScreen.classList.add('hidden');
+                resetGame();
+            } else if (gameState === 'playing') {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+
+                // Click on bottom area to spawn minion
+                if (energy >= 50 && y > canvas.height - 100) {
+                    spawnMinion(x, y);
+                    energy -= 50;
+                    energyCountEl.textContent = energy;
+                } else {
+                    // Click elsewhere to attack towards that direction
+                    if (frameCount - player.lastAttack > weapons[player.weapon].speed) {
+                        player.lastAttack = frameCount;
+                        attackWithWeapon(player.x, player.y, player.weapon, player.isGiant, true, x, y);
+                    }
+                }
+            } else if (gameState === 'gameover' || gameState === 'victory') {
+                gameOverScreen.classList.remove('active');
+                victoryScreen.classList.remove('active');
+                resetGame();
+                gameState = 'playing';
+            }
+        });
+
+        // Touch support
+        document.querySelector('.game-wrapper').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+
+            if (gameState === 'start') {
+                initAudio();
+                gameState = 'playing';
+                startScreen.classList.add('hidden');
+                resetGame();
+            } else if (gameState === 'playing') {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const x = (touch.clientX - rect.left) * scaleX;
+                const y = (touch.clientY - rect.top) * scaleY;
+
+                // Touch on bottom area to spawn minion
+                if (energy >= 50 && y > canvas.height - 100) {
+                    spawnMinion(x, y);
+                    energy -= 50;
+                    energyCountEl.textContent = energy;
+                } else {
+                    // Touch elsewhere to attack towards that direction
+                    if (frameCount - player.lastAttack > weapons[player.weapon].speed) {
+                        player.lastAttack = frameCount;
+                        attackWithWeapon(player.x, player.y, player.weapon, player.isGiant, true, x, y);
+                    }
+                }
+            } else if (gameState === 'gameover' || gameState === 'victory') {
+                gameOverScreen.classList.remove('active');
+                victoryScreen.classList.remove('hidden');
+                resetGame();
+                gameState = 'playing';
+            }
+        }, { passive: false });
+
+        // Responsive canvas
+        function resizeCanvas() {
+            const container = document.querySelector('.game-container');
+            const maxWidth = 800;
+            const maxHeight = 600;
+            const aspectRatio = maxWidth / maxHeight;
+
+            let width = Math.min(window.innerWidth - 20, maxWidth);
+            let height = width / aspectRatio;
+
+            if (height > window.innerHeight - 20) {
+                height = window.innerHeight - 20;
+                width = height * aspectRatio;
+            }
+
+            container.style.width = width + 'px';
+            container.style.height = height + 'px';
+            canvas.width = maxWidth;
+            canvas.height = maxHeight;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Start game
+        player = {
+            x: 100,
+            y: canvas.height - 100,
+            color: '#ffffff',
+            scale: 1,
+            weapon: 'none',
+            isGiant: false,
+            lastAttack: 0
+        };
+
+        gameLoop();
+    </script>
+</body>
+</html>

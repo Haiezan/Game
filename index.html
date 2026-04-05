@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏大厅</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1409 100%);
+            padding: 20px;
+        }
+
+        .lobby-container {
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .lobby-title {
+            text-align: center;
+            color: #f0e68c;
+            font-size: 24px;
+            margin-bottom: 40px;
+            text-shadow: 0 0 20px rgba(240, 230, 140, 0.5),
+                         0 4px 8px rgba(0, 0, 0, 0.5);
+            letter-spacing: 4px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .game-card {
+            background: rgba(20, 20, 30, 0.9);
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 12px;
+            pointer-events: none;
+        }
+
+        .game-card.space {
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2),
+                        inset 0 0 30px rgba(0, 255, 255, 0.05);
+        }
+
+        .game-card.space::before {
+            border: 2px solid transparent;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .game-card.space:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.4),
+                        inset 0 0 40px rgba(0, 255, 255, 0.1);
+        }
+
+        .game-card.ancient {
+            border: 2px solid #8b4513;
+            box-shadow: 0 0 20px rgba(139, 69, 19, 0.2),
+                        inset 0 0 30px rgba(139, 69, 19, 0.05);
+        }
+
+        .game-card.ancient:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 0 40px rgba(139, 69, 19, 0.4),
+                        inset 0 0 40px rgba(139, 69, 19, 0.1);
+        }
+
+        .game-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+            text-align: center;
+        }
+
+        .game-name {
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .game-card.space .game-name {
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .game-card.ancient .game-name {
+            color: #daa520;
+            text-shadow: 0 0 10px #daa520;
+        }
+
+        .game-desc {
+            font-size: 10px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .game-card.space .game-desc {
+            color: #66cccc;
+        }
+
+        .game-card.ancient .game-desc {
+            color: #b8860b;
+        }
+
+        .play-btn {
+            display: block;
+            margin: 20px auto 0;
+            padding: 12px 24px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .game-card.space .play-btn {
+            background: linear-gradient(180deg, #00aaaa 0%, #006666 100%);
+            color: #00ffff;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .game-card.space .play-btn:hover {
+            background: linear-gradient(180deg, #00cccc 0%, #008888 100%);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        .game-card.ancient .play-btn {
+            background: linear-gradient(180deg, #8b4513 0%, #5a2d0a 100%);
+            color: #daa520;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+        }
+
+        .game-card.ancient .play-btn:hover {
+            background: linear-gradient(180deg, #a0522d 0%, #6b3510 100%);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.5);
+            transform: scale(1.05);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #444;
+            font-size: 8px;
+        }
+
+        @media (max-width: 400px) {
+            .lobby-title {
+                font-size: 18px;
+            }
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lobby-container">
+        <h1 class="lobby-title">游戏大厅</h1>
+        <div class="games-grid">
+            <div class="game-card space" onclick="location.href='星际穿梭.html'">
+                <span class="game-icon">🚀</span>
+                <h2 class="game-name">星际穿梭</h2>
+                <p class="game-desc">科幻飞行射击游戏<br>躲避障碍 · 收集道具 · 挑战Boss</p>
+                <button class="play-btn">开始游戏</button>
+            </div>
+            <div class="game-card ancient" onclick="location.href='将士大战.html'">
+                <span class="game-icon">⚔️</span>
+                <h2 class="game-name">将士大战</h2>
+                <p class="game-desc">塔防策略游戏<br>收集能量 · 放置士兵 · 击败Boss</p>
+                <button class="play-btn">开始游戏</button>
+            </div>
+        </div>
+        <p class="footer">按空格键/Z键开始 · 方向键控制移动</p>
+    </div>
+</body>
+</html>
